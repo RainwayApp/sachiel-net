@@ -30,7 +30,6 @@ namespace SachielExample.Handlers
             _consumer = consumer;
             _packet = packet;
             _message = _packet.Message;
-            SyncKey = _message.Header.SyncKey;
             _callback = new PacketCallback {Endpoint = _message.Header.Endpoint };
             switch (_message.Header.Endpoint)
             {
@@ -40,7 +39,7 @@ namespace SachielExample.Handlers
             }
         }
 
-        protected override string SyncKey { get; set; }
+  
 
         private void RequestFileTree()
         {
