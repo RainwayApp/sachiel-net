@@ -36,7 +36,7 @@ internal class ExampleConsumer : Consumer
 Consumers contain a SyncObject; this object is set at initialization can is usually something that allows you to reply to the calling user/connection. In this example its a WebSocketSession, so a message can be sent back to the calling WebSocketSession. The PacketCallback is explained in "Creating A Handler" below.
 
 
-### Creating A Endpoint
+### Creating An Endpoint
 
 For this example let's say we need an endpoint for requesting a file tree from a remote computer based on the path. Creating your endpoint model is this simple:
 
