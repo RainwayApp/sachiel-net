@@ -10,6 +10,5 @@
         /// </summary>
         public abstract void HandlePacket(Consumer consumer, Packet packet);
 
-        protected abstract string SyncKey { get; set; }
     }
 }
