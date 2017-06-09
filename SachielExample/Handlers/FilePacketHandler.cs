@@ -44,7 +44,7 @@ namespace SachielExample.Handlers
 
         private void RequestFileTree()
         {
-            var fileRequest = (RequestFileTree) _message.Model;
+            var fileRequest = (RequestFileTree) _message;
             Console.WriteLine($"Request for {fileRequest.Path} received");
             var response = new TreeResponse {Tree = new FileTree(fileRequest.Path)};
             _callback.Response = response.Serialize();

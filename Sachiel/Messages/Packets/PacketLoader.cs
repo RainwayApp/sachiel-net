@@ -89,7 +89,7 @@ namespace Sachiel.Messages.Packets
                 }).ToList();
             var message = new Message
             {
-                Model = loaders,
+                Source = loaders,
                 Header = new Header
                 {
                     Endpoint = "Packets"
