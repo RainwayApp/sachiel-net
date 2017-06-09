@@ -2,19 +2,19 @@
 
 ## What is it?
 
-Sachiel is a messaging framework built on top of [Google's Protocol Buffers](https://developers.google.com/protocol-buffers/). The goal of this framework is to easily let developers setup and deploy APIs inside their applications (regardless of language) without any headache.So whether you need to setup an API for your IPC or over network messaging, Sachiel is your solution.
+Sachiel is a messaging framework built on top of [Google's Protocol Buffers](https://developers.google.com/protocol-buffers/). The goal of this framework is to let developers easily setup and deploy APIs inside their applications (regardless of language) without any headache. Use cases for Sachiel include setting up APIs for your IPC or network messaging.
 
 
 ## Getting Started 
 
 ### Introduction
 
-This library makes use of [protobuf-net](https://github.com/mgravell/protobuf-net), you should take some time to read over it.
+This library makes use of [protobuf-net](https://github.com/mgravell/protobuf-net); you should take some time to read over it.
 
 
 ### Creating A Consumer 
 
-Consumers are a way to handle individual messages for a particular connection or user. Here is an example of what a Consumer can look like.
+Consumers are a way to handle individual messages for a particular connection or user. Here is an example of what a Consumer can look like:
 
 ```csharp
 internal class ExampleConsumer : Consumer
@@ -33,12 +33,12 @@ internal class ExampleConsumer : Consumer
 }
 ```
 
-Consumers contain a SyncObject, this object is set at initialization and is usually something that allows you to reply to the calling user/connection. In this example its a WebSocketSession so a message can be sent back to the calling WebSocketSession. The PacketCallback is explained in creating your first packet handler.
+Consumers contain a SyncObject; this object is set at initialization can is usually something that allows you to reply to the calling user/connection. In this example its a WebSocketSession, so a message can be sent back to the calling WebSocketSession. The PacketCallback is explained in "Creating A Handler" below.
 
 
-### Creating An Endpoint
+### Creating A Endpoint
 
-For this example lets say we need an endpoint for requesting a file tree from a remote computer based on the path. Creating your endpoint model is this simple.
+For this example let's say we need an endpoint for requesting a file tree from a remote computer based on the path. Creating your endpoint model is this simple:
 
 ```csharp
     [ProtoContract]
@@ -57,7 +57,7 @@ You'll need to mark your models with the ```ProtoContract``` attribute and sort 
 
 ### Creating A Handler
 
-You'll likely want to perform actions on incoming messages, to do this you can create a handler and assign it to your endpoint. Here is a example of a handler.
+You'll likely want to perform actions on incoming messages, to do this you can create a handler and assign it to your endpoint. Here is an example of a handler:
 
 ```csharp
 internal class FilePacketHandler : PacketHandler
@@ -97,22 +97,22 @@ internal class FilePacketHandler : PacketHandler
     }
 ```
 
-Each handler can contain logic for multiple endpoints, so its recommended you make use of the message headers. 
+Each handler can contain logic for multiple endpoints, so it's recommended you make use of the message headers. 
 
 
 ### Creating A Message
 
 Messages contain headers, these headers dictate which endpoint the message is destined for and a sync key to associate a response with a message. 
 
-You have a different options when creating messages, sync keys are completely optional. 
+You have a different options when creating messages, and sync keys are completely optional. 
 
-You can create a serialized message in a static fashion with an existing model
+You can create a serialized message in a static fashion with an existing model:
 
 ```csharp
 Message.Serialized("MyEndPoint", "MySyncKey", MyModel);
 ```
 
-Or as a model
+Or as a model:
 
 ```csharp
 [ProtoContract]
@@ -124,7 +124,7 @@ Or as a model
     }
 ```
 
-And you can then call ```TreeResponse.Serialize()```
+At which point you can call ```TreeResponse.Serialize()```.
 
 You can find more information by reading the documentation of the ```Message``` class. 
 
@@ -135,7 +135,7 @@ For handlers and endpoints to be known, you'll need to make use of the ```Packet
 
 ### Deserializing Packets and Handling Packets
 
-When receiving a packet, you'll want to pass the buffer to ```Packet.GetPacket```, handling received packets is this simple.
+When receiving a packet, you'll want to pass the buffer to ```Packet.GetPacket```, simple as that.
 
 ```csharp
 var packet = Packet.GetPacket(data);
@@ -144,7 +144,7 @@ packet?.HandlePacket(_consumer);
 
 ### Notes
 
-This documentation/framework is a WIP and if you'd like to contribute we're happy to accept pull request. You can find a full example application inside of the repository.
+This documentation and framework is a WIP. If you'd like to contribute we'll be happy to accept pull request. You can find a full example application in the repository.
 
 
 ## Other Implementations 
@@ -157,7 +157,3 @@ This documentation/framework is a WIP and if you'd like to contribute we're happ
 [Website](https://rainway.io/)
 
 [Twitter](https://twitter.com/rainwayapp)
-
-
-
-
