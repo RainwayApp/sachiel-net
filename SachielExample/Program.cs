@@ -31,8 +31,11 @@ namespace SachielExample
 
         private static void Main(string[] args)
         {
+         
             SetupPackets();
+            
             new ExampleServer().Start();
+            Console.Read();
         }
     }
 }
