@@ -5,6 +5,23 @@
 Sachiel is a messaging framework built on top of [Google's Protocol Buffers](https://developers.google.com/protocol-buffers/). The goal of this framework is to let developers easily setup and deploy APIs inside their applications (regardless of language) without any headache. Use cases for Sachiel include setting up APIs for your IPC or network messaging.
 
 
+## Progress
+
+### Supported Langauges 
+
+- C#
+- [Typescript](https://github.com/RainwayApp/sachiel-ts)
+
+### TODO Langauges 
+
+- Php (in progress)
+- Java (not started)
+- C++ (not started)
+- Ruby (not started)
+- Python (not started)
+
+If you wish to help port Sachiel to another langauge feel free, we're happy to link from this repo. 
+
 ## Getting Started 
 
 ### Introduction
@@ -145,11 +162,6 @@ packet?.HandlePacket(_consumer);
 ### Notes
 
 This documentation and framework is a WIP. If you'd like to contribute we'll be happy to accept pull request. You can find a full example application in the repository.
-
-
-## Other Implementations 
-
-[sachiel-typescript](https://github.com/RainwayApp/sachiel-ts)
 
 
 ## Links
