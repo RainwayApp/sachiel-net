@@ -162,10 +162,3 @@ packet?.HandlePacket(_consumer);
 ### Notes
 
 This documentation and framework is a WIP. If you'd like to contribute we'll be happy to accept pull request. You can find a full example application in the repository.
-
-
-## Links
-
-[Website](https://rainway.io/)
-
-[Twitter](https://twitter.com/rainwayapp)
