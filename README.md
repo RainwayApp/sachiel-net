@@ -4,6 +4,10 @@
 
 Sachiel is a messaging framework built on top of [Google's Protocol Buffers](https://developers.google.com/protocol-buffers/). The goal of this framework is to let developers easily setup and deploy APIs inside their applications (regardless of language) without any headache. Use cases for Sachiel include setting up APIs for your IPC or network messaging.
 
+## Installation Instructions 
+
+Install via NuGet: ```Install-Package sachiel-net```
+
 
 ## Progress
 
