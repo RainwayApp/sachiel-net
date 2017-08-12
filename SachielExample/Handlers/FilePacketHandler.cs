@@ -16,8 +16,6 @@ namespace SachielExample.Handlers
         public FileTree Tree { get; set; }
     }
 
-
-
     internal class FilePacketHandler : PacketHandler
     {
         private PacketCallback _callback;
@@ -39,13 +37,11 @@ namespace SachielExample.Handlers
             }
         }
 
-  
-
         private void RequestFileTree()
         {
             var fileRequest = (RequestFileTree) _message.Source;
             Console.WriteLine($"Request for {fileRequest.Path} received");
-            var response = new TreeResponse {Tree = new FileTree(fileRequest.Path)};
+            var response = new TreeResponse {Tree = new FileTree(fileRequest.Path, fileRequest.DeepScan)};
             _callback.Response = response.Serialize();
             _consumer.Reply(_callback);
         }

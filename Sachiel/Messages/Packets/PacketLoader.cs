@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using ProtoBuf;
+using Sachiel.Extensions;
 
 namespace Sachiel.Messages.Packets
 {
@@ -29,9 +32,8 @@ namespace Sachiel.Messages.Packets
 
         [ProtoMember(3)]
         public string Endpoint { get; set; }
-        
     }
-  
+
     public static class PacketLoader
     {
         /// <summary>
@@ -45,16 +47,24 @@ namespace Sachiel.Messages.Packets
         private static Type GetType(string v)
         {
             if (Type.GetType(v) != null)
+            {
                 return Type.GetType(v);
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+            }
+            foreach (var a in SachielAppDomain.CurrentDomain.GetAssemblies())
             foreach (var t in a.GetTypes())
             {
                 if (t.ToString().Equals(v))
+                {
                     return t;
+                }
                 if (t.FullName.Equals(v))
+                {
                     return t;
+                }
                 if (t.Name.Equals(v))
+                {
                     return t;
+                }
             }
             return null;
         }
@@ -66,9 +76,9 @@ namespace Sachiel.Messages.Packets
         /// <returns></returns>
         private static IEnumerable<Type> GetTypesWithSachielAttribute()
         {
-            return from assembly in AppDomain.CurrentDomain.GetAssemblies()
+            return from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
                 from type in assembly.GetTypes()
-                where type.GetCustomAttributes(typeof(SachielEndpoint), true).Length > 0
+                where !string.IsNullOrWhiteSpace(type.GetTypeInfo().GetCustomAttribute<SachielEndpoint>(true)?.Name)
                 select type;
         }
 
@@ -76,11 +86,11 @@ namespace Sachiel.Messages.Packets
         ///     Loop over each class with a SachielEndpoint and serialize them to a stream.
         /// </summary>
         /// <param name="stream"></param>
-        public static void SavePackets(Stream stream)
+        private static void SavePackets(Stream stream)
         {
             var models = GetTypesWithSachielAttribute();
             var loaders = (from model in models
-                let sachielInfo = (SachielEndpoint) model.GetCustomAttributes(typeof(SachielEndpoint), false)[0]
+                let sachielInfo = model.GetTypeInfo().GetCustomAttribute<SachielEndpoint>(false)
                 select new LoaderModel
                 {
                     Type = model.FullName,
@@ -95,15 +105,77 @@ namespace Sachiel.Messages.Packets
                     Endpoint = "Packets"
                 }
             }.Serialize();
-           stream.Write(message, 0, message.Length);
+            stream.Write(message, 0, message.Length);
+        }
+
+        /// <summary>
+        ///     Saves all response/request models to raw schemas.
+        ///     Call after loading all your packets.
+        /// </summary>
+        /// <param name="path"></param>
+        public static void DumpSchemas(string path, bool removePackage = true)
+        {
+            var requestPath = Path.Combine(path, "Request");
+            var responsePath = Path.Combine(path, "Responses");
+            Directory.CreateDirectory(requestPath);
+            Directory.CreateDirectory(responsePath);
+            //save our packets
+            foreach (var packet in Packets.ToList())
+            {
+                var requestName = Path.Combine(requestPath, $"{packet.Key}.schema");
+                File.WriteAllText(requestName, GetSchemaForType(packet.Value.Type, removePackage));
+            }
+            foreach (var type in GetTypesWithSachielHeader())
+            {
+                var endpoint = type.GetTypeInfo().GetCustomAttribute<SachielHeader>(false).Endpoint;
+                var responseName = Path.Combine(responsePath, $"{endpoint}.schema");
+                File.WriteAllText(responseName, GetSchemaForType(type, removePackage));
+            }
+        }
+
+        private static string GetSchemaForType(Type type, bool removePackage)
+        {
+            var schema = MessageUtils.GetSchema(type);
+            if (removePackage)
+            {
+                var builder = new StringBuilder();
+                foreach (var myString in schema.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (myString.Contains("package"))
+                    {
+                        continue;
+                    }
+                    builder.AppendLine(myString);
+                }
+                schema = builder.ToString();
+            }
+            return schema;
+        }
+
+        /// <summary>
+        ///     Get each class with a defined SachielEndpoint
+        /// </summary>
+        /// <returns></returns>
+        private static IEnumerable<Type> GetTypesWithSachielHeader()
+        {
+            return from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
+                from type in assembly.GetTypes()
+                where type.GetTypeInfo().GetCustomAttributes(typeof(SachielHeader), true).Any()
+                select type;
         }
 
         /// <summary>
         ///     Load packets from the serialized packet buffer
         /// </summary>
         /// <param name="packetBuffer"></param>
-        public static void LoadPackets(byte[] packetBuffer)
+        public static void LoadPackets()
         {
+            byte[] packetBuffer;
+            using (var memoryStream = new MemoryStream())
+            {
+                SavePackets(memoryStream);
+                packetBuffer = memoryStream.ToArray();
+            }
             var packets = (List<LoaderModel>) new Message(packetBuffer).Deserialize<List<LoaderModel>>();
             foreach (var packet in packets)
             {
@@ -111,12 +183,16 @@ namespace Sachiel.Messages.Packets
                 var handlerName = packet.Handler;
                 var type = GetType(packet.Type);
                 if (type == null)
+                {
                     throw new InvalidCastException(
                         $"\"{packet.Type}\" could not be found as a valid type.");
+                }
                 var handler = GetType(handlerName);
                 if (handler == null)
+                {
                     throw new InvalidCastException(
                         $"\"{packet.Handler}\" could not be found as a valid type");
+                }
                 Packets.Add(endpointName, new PacketInfo
                 {
                     Type = type,

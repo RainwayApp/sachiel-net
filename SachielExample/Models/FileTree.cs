@@ -21,6 +21,11 @@ namespace SachielExample.Models
             FileSize = size;
         }
 
+        public File()
+        {
+            
+        }
+
         [ProtoMember(1)]
         public string Path { get; set; }
 
@@ -41,6 +46,11 @@ namespace SachielExample.Models
         public Folder(string name)
         {
             Name = name;
+        }
+
+        public Folder()
+        {
+            
         }
 
         [ProtoMember(1)]
@@ -70,6 +80,10 @@ namespace SachielExample.Models
     {
         public bool DeepWalk;
 
+        public FileTree()
+        {
+            
+        }
         public FileTree(string rootPath, bool deepWalk = false)
         {
             RootFolder = new Folder(rootPath);

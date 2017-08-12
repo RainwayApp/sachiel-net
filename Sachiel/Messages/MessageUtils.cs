@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using ProtoBuf;
 
 namespace Sachiel.Messages
@@ -12,7 +13,7 @@ namespace Sachiel.Messages
         /// <returns></returns>
         public static string GetSchema(Type type)
         {
-            var method = typeof(Serializer).GetMethod("GetProto").MakeGenericMethod(type);
+            var method = typeof(Serializer).GetMethod("GetProto", Type.EmptyTypes).MakeGenericMethod(type);
             method.Invoke(null, null);
             return (string) method.Invoke(null, null);
         }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using ProtoBuf;
 using Sachiel.Extensions;
 using Sachiel.Messages.Exceptions;
@@ -42,15 +43,15 @@ namespace Sachiel.Messages
         /// </summary>
         public Message()
         {
-            var hasDataContractAttribute = GetType()
+            var hasDataContractAttribute = GetType().GetTypeInfo()
                 .GetCustomAttributes(typeof(ProtoContractAttribute), true).Any();
             if (!hasDataContractAttribute)
                 throw new InvalidModelException("Please add the ProtoContract Attribute to your source.");
             if (GetType() == typeof(Message)) return;
             Source = this;
-            var attributes = Source.GetType().GetCustomAttributes(typeof(SachielHeader), false);
-            if (attributes.Length <= 0 || attributes.ElementAt(0) == null) return;
-            var info = (SachielHeader) attributes[0];
+            var attributes = Source.GetType().GetTypeInfo().GetCustomAttributes(typeof(SachielHeader), false).ToList();
+            if (!attributes.Any() || attributes.ElementAt(0) == null) return;
+            var info = (SachielHeader)attributes[0];
             Header.Endpoint = info.Endpoint;
         }
 
@@ -65,6 +66,12 @@ namespace Sachiel.Messages
         ///     This source instance is used during serialization
         /// </summary>
         public object Source { get; set; }
+
+
+        public T GetSource<T>()
+        {
+            return (T) Source;
+        }
         
         /// <summary>
         ///     Serialized message buffer
@@ -111,7 +118,7 @@ namespace Sachiel.Messages
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public object Deserialize<T>()
+        public T Deserialize<T>()
         {
             if (!IsCompatibile<T>())
                 throw new InvalidSerializationException($"{typeof(T)} is not based on Message.");
@@ -119,7 +126,7 @@ namespace Sachiel.Messages
             {
                 Source = Serializer.Deserialize<T>(memoryStream);
             }
-            return Source;
+            return (T) Source;
         }
         /// <summary>
         /// Deserializes a message header from a message block
@@ -142,7 +149,7 @@ namespace Sachiel.Messages
         {
             if (Source == null) return true;
             o = o ?? Source;
-            return ((IEnumerable) o).Cast<object>().Any(item => item.GetType().IsSubclassOf(typeof(Message)));
+            return ((IEnumerable) o).Cast<object>().Any(item => item.GetType().GetTypeInfo().IsSubclassOf(typeof(Message)));
         }
         /// <summary>
         /// Checks if a type is a List
@@ -151,7 +158,7 @@ namespace Sachiel.Messages
         /// <returns></returns>
         private bool IsList(Type type)
         {
-            return type.IsGenericType &&
+            return type.GetTypeInfo().IsGenericType &&
                    type.GetGenericTypeDefinition().IsAssignableFrom(typeof(List<>));
         }
         /// <summary>
@@ -161,7 +168,7 @@ namespace Sachiel.Messages
         /// <returns></returns>
         private bool IsDictionary(Type type)
         {
-            return type.IsGenericType &&
+            return type.GetTypeInfo().IsGenericType &&
                    type.GetGenericTypeDefinition().IsAssignableFrom(typeof(Dictionary<,>));
         }
         /// <summary>
@@ -180,7 +187,7 @@ namespace Sachiel.Messages
         /// <returns></returns>
         private bool IsCompatibile(Type type)
         {
-            if (type.IsSubclassOf(typeof(Message)))
+            if (type.GetTypeInfo().IsSubclassOf(typeof(Message)))
                 return true;
             if (IsList(type) && ListContainsType())
                 return true;
@@ -189,15 +196,29 @@ namespace Sachiel.Messages
             return ListContainsType(list);
         }
 
-     
+
         /// <summary>
-        ///   Serializes a Message and sets the Raw property.
+        ///   Serializes a Message to a Sachiel buffer and sets the Raw property.
+        ///   If you are attempting to serialize a request endpoint, set includeEndpointAsHeader to true to automatically set the header. 
         /// </summary>
         /// <returns></returns>
-        public byte[] Serialize()
+        public byte[] Serialize(bool includeEndpointAsHeader = false)
         {
             if (!IsCompatibile(Source.GetType()))
                 throw new InvalidSerializationException($"{Source.GetType()} is not based on Message.");
+
+            // For IPC purposes people might wish to use request both ways, this should allow them to do that. 
+            if (includeEndpointAsHeader)
+            {
+                var attribute = Source.GetType().GetTypeInfo().GetCustomAttribute<SachielEndpoint>(false);
+                if (attribute == null) throw new InvalidOperationException("No SachielEndpoint attribute is present on message.");
+                Header.Endpoint = attribute?.Name;
+            }
+            //Throw is the header is null.
+            if (string.IsNullOrEmpty(Header?.Endpoint))
+            {
+                throw new InvalidOperationException("Message headers cannot be null.");
+            }
             using (var messageStream = new MemoryStream())
             using (var bWriter = new BinaryWriter(messageStream))
             {

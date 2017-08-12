@@ -11,5 +11,8 @@ namespace SachielExample.Models
     {
         [ProtoMember(1)]
         public string Path { get; set; }
+
+        [ProtoMember(2)]
+        public bool DeepScan { get; set; }
     }
 }
