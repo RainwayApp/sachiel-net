@@ -82,7 +82,7 @@ namespace Sachiel.Messages.Packets
             return (from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
                 from type in assembly.GetTypes()
                 where !string.IsNullOrWhiteSpace(type.GetTypeInfo().GetCustomAttribute<SachielEndpoint>(true)?.Name)
-                select type) as List<Type>;
+                select type).ToList();
         }
 
        
@@ -206,7 +206,7 @@ namespace Sachiel.Messages.Packets
             return (from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
                 from type in assembly.GetTypes()
                 where type.GetTypeInfo().GetCustomAttributes(typeof(SachielHeader), true).Any()
-                select type) as List<Type>;
+                select type).ToList();
         }
 
         /// <summary>
