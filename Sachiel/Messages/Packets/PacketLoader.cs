@@ -120,6 +120,8 @@ namespace Sachiel.Messages.Packets
         public static void Compile()
         {
             var model = TypeModel.Create();
+            model.Add(typeof(Header), true);
+            model.Add(typeof(Message), true);
             foreach (var packet in Packets.Values)
             {
                 model.Add(packet.Type, true);
@@ -137,6 +139,8 @@ namespace Sachiel.Messages.Packets
         /// </summary>
         public static void CompileInPlace(int iterations = 5)
         {
+            RuntimeTypeModel.Default.Add(typeof(Header), true);
+            RuntimeTypeModel.Default.Add(typeof(Message), true);
             foreach (var packet in Packets.Values)
             {
                 RuntimeTypeModel.Default.Add(packet.Type, true);
