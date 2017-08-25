@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Reflection;
 using ProtoBuf;
+using ProtoBuf.Meta;
+using Sachiel.Messages.Packets;
 
 namespace Sachiel.Messages
 {
     internal static class MessageUtils
     {
+
         /// <summary>
         ///  We use reflection to get the Proto Schema from protobuff-net
         /// </summary>

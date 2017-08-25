@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using ProtoBuf;
+using ProtoBuf.Meta;
 using Sachiel.Extensions;
 
 namespace Sachiel.Messages.Packets
@@ -41,6 +42,8 @@ namespace Sachiel.Messages.Packets
         /// </summary>
         public static Dictionary<string, PacketInfo> Packets = new Dictionary<string, PacketInfo>();
 
+        internal static TypeModel Serializer;
+
         /// <summary>
         ///     Turns a string into a class Type
         /// </summary>
@@ -74,13 +77,15 @@ namespace Sachiel.Messages.Packets
         ///     Get each class with a defined SachielEndpoint
         /// </summary>
         /// <returns></returns>
-        private static IEnumerable<Type> GetTypesWithSachielAttribute()
+        private static List<Type> GetTypesWithSachielAttribute()
         {
-            return from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
+            return (from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
                 from type in assembly.GetTypes()
                 where !string.IsNullOrWhiteSpace(type.GetTypeInfo().GetCustomAttribute<SachielEndpoint>(true)?.Name)
-                select type;
+                select type) as List<Type>;
         }
+
+       
 
         /// <summary>
         ///     Loop over each class with a SachielEndpoint and serialize them to a stream.
@@ -107,6 +112,46 @@ namespace Sachiel.Messages.Packets
             }.Serialize();
             stream.Write(message, 0, message.Length);
         }
+
+        /// <summary>
+        /// Allows for ahead of time compiling and analysis of messages.
+        /// This method will analyse from the root-types, adding in any additional types needed as it goes, setting the compiled generated instance Serializer instance.
+        /// </summary>
+        public static void Compile()
+        {
+            var model = TypeModel.Create();
+            foreach (var packet in Packets.Values)
+            {
+                model.Add(packet.Type, true);
+            }
+            foreach (var type in GetTypesWithSachielHeader())
+            {
+                model.Add(type, true);
+            }
+            Serializer = model.Compile();
+        }
+
+        /// <summary>
+        /// Allows for partial ahead of time compiling and analysis of messages.
+        /// This method will not fully expand the models
+        /// </summary>
+        public static void CompileInPlace(int iterations = 5)
+        {
+            foreach (var packet in Packets.Values)
+            {
+                RuntimeTypeModel.Default.Add(packet.Type, true);
+            }
+            foreach (var type in GetTypesWithSachielHeader())
+            {
+                RuntimeTypeModel.Default.Add(type, true);
+            }
+            for (var i = 0; i < iterations; i++)
+            {
+                RuntimeTypeModel.Default.CompileInPlace();
+            }
+        }
+
+
 
         /// <summary>
         ///     Saves all response/request models to raw schemas.
@@ -156,12 +201,12 @@ namespace Sachiel.Messages.Packets
         ///     Get each class with a defined SachielEndpoint
         /// </summary>
         /// <returns></returns>
-        private static IEnumerable<Type> GetTypesWithSachielHeader()
+        private static List<Type> GetTypesWithSachielHeader()
         {
-            return from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
+            return (from assembly in SachielAppDomain.CurrentDomain.GetAssemblies()
                 from type in assembly.GetTypes()
                 where type.GetTypeInfo().GetCustomAttributes(typeof(SachielHeader), true).Any()
-                select type;
+                select type) as List<Type>;
         }
 
         /// <summary>
@@ -176,7 +221,7 @@ namespace Sachiel.Messages.Packets
                 SavePackets(memoryStream);
                 packetBuffer = memoryStream.ToArray();
             }
-            var packets = (List<LoaderModel>) new Message(packetBuffer).Deserialize<List<LoaderModel>>();
+            var packets = new Message(packetBuffer).Deserialize<List<LoaderModel>>();
             foreach (var packet in packets)
             {
                 var endpointName = packet.Endpoint;

@@ -197,6 +197,18 @@ namespace Sachiel.Messages
         }
 
 
+        private void Serialize(MemoryStream stream, object value)
+        {
+            if (PacketLoader.Serializer != null)
+            {
+                PacketLoader.Serializer.Serialize(stream, value);
+            }
+            else
+            {
+                Serializer.Serialize(stream, value);
+            }
+        }
+
         /// <summary>
         ///   Serializes a Message to a Sachiel buffer and sets the Raw property.
         ///   If you are attempting to serialize a request endpoint, set includeEndpointAsHeader to true to automatically set the header. 
@@ -224,14 +236,14 @@ namespace Sachiel.Messages
             {
                 using (var headerStream = new MemoryStream())
                 {
-                    Serializer.Serialize(headerStream, Header);
+                    Serialize(headerStream, Header);
                     var header = headerStream.ToArray();
                     bWriter.WriteVariableLengthQuantity((uint)header.Length);
                     bWriter.Write(header);
                 }
                 using (var protoStream = new MemoryStream())
                 {
-                    Serializer.Serialize(protoStream, Source);
+                    Serialize(protoStream, Source);
                     bWriter.Write(protoStream.ToArray());
                 }
                 Raw = messageStream.ToArray();

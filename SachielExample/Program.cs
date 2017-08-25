@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using Sachiel.Messages;
 using Sachiel.Messages.Packets;
@@ -35,6 +37,9 @@ namespace SachielExample
 
         private static void RunExample()
         {
+
+
+      
             //Loads all the packets in the application
             PacketLoader.LoadPackets();
             Console.WriteLine($"{PacketLoader.Packets.Count} packets loaded");

@@ -5,6 +5,25 @@
     <RootNamespace>Sachiel</RootNamespace>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>SachielKey.pfx</AssemblyOriginatorKeyFile>
+    <Version>1.7.0</Version>
+    <Copyright>Copyright ©  Rainway, Inc. 2017</Copyright>
+    <Description>A simple to use messaging framework built on protocol buffers.
+</Description>
+    <RepositoryUrl>https://github.com/RainwayApp/sachiel-net</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/RainwayApp/sachiel-net</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/RainwayApp/sachiel-net/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageIconUrl>https://avatars3.githubusercontent.com/u/25223986</PackageIconUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>sachiel-net</PackageId>
+    <Authors>Rainway, Inc.</Authors>
+    <Company>Rainway, Inc.</Company>
+    <Product>sachiel-net</Product>
+    <AssemblyVersion>1.7.0.0</AssemblyVersion>
+    <FileVersion>1.7.0.0</FileVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.6|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_6</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

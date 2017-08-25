@@ -62,3 +62,4 @@ packages/
 
 #Test files
 *.testsettings
+.vs/Sachiel/v15/sqlite3/storage.ide
