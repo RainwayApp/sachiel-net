@@ -10,7 +10,7 @@ namespace SachielExample.Handlers
 {
     [ProtoContract]
     [SachielHeader(Endpoint = "TreeResponse")]
-    internal class TreeResponse : Message
+    public class TreeResponse : Message
     {
         [ProtoMember(1)]
         public FileTree Tree { get; set; }
@@ -39,9 +39,11 @@ namespace SachielExample.Handlers
 
         private void RequestFileTree()
         {
-            var fileRequest = (RequestFileTree) _message.Source;
+            var fileRequest = _message.Deserialize<RequestFileTree>();
+
+            Console.WriteLine(fileRequest.Path);
             Console.WriteLine($"Request for {fileRequest.Path} received");
-            var response = new TreeResponse {Tree = new FileTree(fileRequest.Path, fileRequest.DeepScan)};
+            var response = new TreeResponse {Tree = null};
             _callback.Response = response.Serialize();
             _consumer.Reply(_callback);
         }

@@ -88,10 +88,10 @@ namespace Sachiel.Messages.Packets
        
 
         /// <summary>
-        ///     Loop over each class with a SachielEndpoint and serialize them to a stream.
+        ///     Loop over each class with a SachielEndpoint and returns a list
         /// </summary>
         /// <param name="stream"></param>
-        private static void SavePackets(Stream stream)
+        private static List<LoaderModel> FindPackets()
         {
             var models = GetTypesWithSachielAttribute();
             var loaders = (from model in models
@@ -102,15 +102,7 @@ namespace Sachiel.Messages.Packets
                     Handler = sachielInfo.Handler.FullName,
                     Endpoint = sachielInfo.Name
                 }).ToList();
-            var message = new Message
-            {
-                Source = loaders,
-                Header = new Header
-                {
-                    Endpoint = "Packets"
-                }
-            }.Serialize();
-            stream.Write(message, 0, message.Length);
+            return loaders;
         }
 
         /// <summary>
@@ -219,14 +211,7 @@ namespace Sachiel.Messages.Packets
         /// <param name="packetBuffer"></param>
         public static void LoadPackets()
         {
-            byte[] packetBuffer;
-            using (var memoryStream = new MemoryStream())
-            {
-                SavePackets(memoryStream);
-                packetBuffer = memoryStream.ToArray();
-            }
-            var packets = new Message(packetBuffer).Deserialize<List<LoaderModel>>();
-            foreach (var packet in packets)
+            foreach (var packet in FindPackets())
             {
                 var endpointName = packet.Endpoint;
                 var handlerName = packet.Handler;

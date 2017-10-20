@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using ProtoBuf;
 using ProtoBuf.Meta;
@@ -8,6 +9,14 @@ namespace Sachiel.Messages
 {
     internal static class MessageUtils
     {
+
+        public static unsafe T Deserialize<T>(byte* data, int length)
+        {
+            using (var ms = new UnmanagedMemoryStream(data, length))
+            {
+                return Serializer.Deserialize<T>(ms);
+            }
+        }
 
         /// <summary>
         ///  We use reflection to get the Proto Schema from protobuff-net

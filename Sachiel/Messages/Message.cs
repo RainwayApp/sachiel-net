@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using ProtoBuf;
-using Sachiel.Extensions;
+using Sachiel.Extensions.Arrays;
+using Sachiel.Extensions.Binary;
 using Sachiel.Messages.Exceptions;
 using Sachiel.Messages.Packets;
 
 namespace Sachiel.Messages
 {
-
     /// <summary>
     ///     The Message class is used to both serialize and deserialize Messages.
     /// </summary>
@@ -24,19 +27,28 @@ namespace Sachiel.Messages
         /// <param name="messageData"></param>
         public Message(byte[] messageData)
         {
-            using (var messageStream = new MemoryStream(messageData))
-            using (var bReader = new BinaryReader(messageStream))
+            unsafe
             {
-                var length = (int) bReader.ReadVariableLengthQuantity();
-                Header = GetHeader(bReader.ReadBytes(length));
-                var rawBytes = new List<byte>();
-                while (bReader.BaseStream.Position != bReader.BaseStream.Length)
+                var segmentReader = new UnsafeBinaryReader(Encoding.UTF8);
+                fixed (byte* mData = messageData)
                 {
-                    rawBytes.Add(bReader.ReadByte());
+                    var segment = new BufferSegment(mData);
+                    segmentReader.SetBuffer(segment.Data, messageData.Length);
+                    var length = segmentReader.ReadVariableLengthQuantity();
+                    fixed (byte* headerData = segmentReader.ReadBytes(length))
+                    {
+                        Header = GetHeader(headerData, length);
+                    }
+                    Payload = segmentReader.ReadBytes(segmentReader.AvailableData());
                 }
-                Raw = rawBytes.ToArray();
             }
         }
+
+        /// <summary>
+        /// Contains the payload of a Sachiel message.
+        /// </summary>
+        internal byte[] Payload { get; set; }
+
 
         /// <summary>
         /// Initiate a sachiel message and auto assign values if a SachielHeader attribute is present. 
@@ -51,7 +63,7 @@ namespace Sachiel.Messages
             Source = this;
             var attributes = Source.GetType().GetTypeInfo().GetCustomAttributes(typeof(SachielHeader), false).ToList();
             if (!attributes.Any() || attributes.ElementAt(0) == null) return;
-            var info = (SachielHeader)attributes[0];
+            var info = (SachielHeader) attributes[0];
             Header.Endpoint = info.Endpoint;
         }
 
@@ -65,43 +77,30 @@ namespace Sachiel.Messages
         /// <summary>
         ///     This source instance is used during serialization
         /// </summary>
-        public object Source { get; set; }
-
-
-        public T GetSource<T>()
-        {
-            return (T) Source;
-        }
-        
-        /// <summary>
-        ///     Serialized message buffer
-        /// </summary>
-        public byte[] Raw { get; set; }
+        internal object Source { get; set; }
 
 
         /// <summary>
-        ///     Create and return a message in a static fashion
+        ///     Deserializes a Sachiel payload into its original model, if this method was already called it returns a cached copy of the payload.
         /// </summary>
-        /// <param name="endpoint"></param>
-        /// <param name="synckey"></param>
-        /// <param name="source"></param>
+        /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static Message Instance(string endpoint, string synckey, object source)
+        public T Deserialize<T>()
         {
-            return new Message {Header = new Header {Endpoint = endpoint, SyncKey = synckey}, Source = source};
-        }
-
-        /// <summary>
-        ///     Create a message and return the serialized buffer
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <param name="synckey"></param>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        public static byte[] Serialized(string endpoint, string synckey, object source)
-        {
-            return new Message {Header = new Header{Endpoint = endpoint, SyncKey = synckey}, Source = source}
-                .Serialize();
+            if (Source != null)
+            {
+                return (T) Source;
+            }
+            unsafe
+            {
+                if (!IsCompatibile<T>())
+                    throw new InvalidSerializationException($"{typeof(T)} is not based on Message.");
+                fixed (byte* payloadData = Payload)
+                {
+                    Source = MessageUtils.Deserialize<T>(payloadData, Payload.Length);
+                    return (T) Source;
+                }
+            }
         }
 
         /// <summary>
@@ -114,32 +113,16 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        ///     Deserializes a proto buffer to the Message based class of your choice and sets the Source property to the instance.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T Deserialize<T>()
-        {
-            if (!IsCompatibile<T>())
-                throw new InvalidSerializationException($"{typeof(T)} is not based on Message.");
-            using (var memoryStream = new MemoryStream(Raw))
-            {
-                Source = Serializer.Deserialize<T>(memoryStream);
-            }
-            return (T) Source;
-        }
-        /// <summary>
         /// Deserializes a message header from a message block
         /// </summary>
         /// <param name="data"></param>
+        /// <param name="length"></param>
         /// <returns>A message header containing the Endpoint name and Synckkey</returns>
-        private Header GetHeader(byte[] data)
+        private unsafe Header GetHeader(byte* data, int length)
         {
-            using (var memoryStream = new MemoryStream(data))
-            {
-                return Serializer.Deserialize<Header>(memoryStream);
-            }
+            return MessageUtils.Deserialize<Header>(data, length);
         }
+
         /// <summary>
         /// Check if a list contains a valid Message type object 
         /// </summary>
@@ -149,8 +132,10 @@ namespace Sachiel.Messages
         {
             if (Source == null) return true;
             o = o ?? Source;
-            return ((IEnumerable) o).Cast<object>().Any(item => item.GetType().GetTypeInfo().IsSubclassOf(typeof(Message)));
+            return ((IEnumerable) o).Cast<object>()
+                .Any(item => item.GetType().GetTypeInfo().IsSubclassOf(typeof(Message)));
         }
+
         /// <summary>
         /// Checks if a type is a List
         /// </summary>
@@ -161,6 +146,7 @@ namespace Sachiel.Messages
             return type.GetTypeInfo().IsGenericType &&
                    type.GetGenericTypeDefinition().IsAssignableFrom(typeof(List<>));
         }
+
         /// <summary>
         /// Checks if a type is a Dictionary
         /// </summary>
@@ -171,6 +157,7 @@ namespace Sachiel.Messages
             return type.GetTypeInfo().IsGenericType &&
                    type.GetGenericTypeDefinition().IsAssignableFrom(typeof(Dictionary<,>));
         }
+
         /// <summary>
         /// Determins if a given type can be serialized 
         /// </summary>
@@ -180,6 +167,7 @@ namespace Sachiel.Messages
         {
             return IsCompatibile(typeof(T));
         }
+
         /// <summary>
         /// Determins if a given type can be serialized 
         /// </summary>
@@ -223,7 +211,8 @@ namespace Sachiel.Messages
             if (includeEndpointAsHeader)
             {
                 var attribute = Source.GetType().GetTypeInfo().GetCustomAttribute<SachielEndpoint>(false);
-                if (attribute == null) throw new InvalidOperationException("No SachielEndpoint attribute is present on message.");
+                if (attribute == null)
+                    throw new InvalidOperationException("No SachielEndpoint attribute is present on message.");
                 Header.Endpoint = attribute?.Name;
             }
             //Throw is the header is null.
@@ -232,23 +221,16 @@ namespace Sachiel.Messages
                 throw new InvalidOperationException("Message headers cannot be null.");
             }
             using (var messageStream = new MemoryStream())
-            using (var bWriter = new BinaryWriter(messageStream))
             {
                 using (var headerStream = new MemoryStream())
                 {
                     Serialize(headerStream, Header);
-                    var header = headerStream.ToArray();
-                    bWriter.WriteVariableLengthQuantity((uint)header.Length);
-                    bWriter.Write(header);
+                    UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong) headerStream.Length), true);
+                    UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
+                    Serialize(messageStream, Source);
                 }
-                using (var protoStream = new MemoryStream())
-                {
-                    Serialize(protoStream, Source);
-                    bWriter.Write(protoStream.ToArray());
-                }
-                Raw = messageStream.ToArray();
+                return messageStream.ToArray();
             }
-            return Raw;
         }
     }
 }

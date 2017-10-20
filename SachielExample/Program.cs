@@ -39,9 +39,10 @@ namespace SachielExample
         {
 
 
-      
+
             //Loads all the packets in the application
             PacketLoader.LoadPackets();
+            PacketLoader.CompileInPlace();
             Console.WriteLine($"{PacketLoader.Packets.Count} packets loaded");
 
             //Saves the schemas of all packets/responses
@@ -62,10 +63,10 @@ namespace SachielExample
 
             //Load a packet from a buffer
             var packet = Packet.GetPacket(data);
-       
+
             //Handle the packet
             packet.HandlePacket(consomer);
-         
+
         }
 
         private static void Main(string[] args)
