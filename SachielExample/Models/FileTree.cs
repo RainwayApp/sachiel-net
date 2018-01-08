@@ -123,6 +123,7 @@ namespace SachielExample.Models
                     }
                     catch (Exception)
                     {
+                        // ignored
                     }
                 dir.AddFiles(f);
                 if (DeepWalk)

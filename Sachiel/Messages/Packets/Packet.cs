@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Sachiel.Messages.Packets
@@ -13,6 +14,7 @@ namespace Sachiel.Messages.Packets
         /// The name of the completed endpoint
         /// </summary>
         public string Endpoint { get; set; }
+
         /// <summary>
         /// The seralized response 
         /// </summary>
@@ -28,6 +30,7 @@ namespace Sachiel.Messages.Packets
         /// The packet handler defined in the packet schema 
         /// </summary>
         public Type Handler { get; set; }
+
         /// <summary>
         /// The Message instance from the deserialized buffer 
         /// </summary>
@@ -42,6 +45,7 @@ namespace Sachiel.Messages.Packets
         {
             return PacketLoader.Packets.ContainsKey(endpoint) ? PacketLoader.Packets[endpoint] : null;
         }
+
         /// <summary>
         /// Accepts a serialized message buffer and attempts to deserialize and return a valid Packet object. 
         /// </summary>
@@ -53,14 +57,26 @@ namespace Sachiel.Messages.Packets
             var message = new Message(data);
             var packetInfo = GetPacketInfo(message.Header.Endpoint);
             if (packetInfo == null) return null;
-            var method = message.GetType().GetMethod("Deserialize").MakeGenericMethod(packetInfo.Type);
-            method.Invoke(message, null);
-            return new Packet
+            var method = message.GetType().GetMethod("Deserialize")?.MakeGenericMethod(packetInfo.Type);
+            if (method != null)
             {
-                Message = message,
-                Handler = packetInfo.Handler
-            };
+                method.Invoke(message, null);
+                return new Packet
+                {
+                    Message = message,
+                    Handler = packetInfo.Handler,
+                    Expensive = packetInfo.Expensive,
+                };
+            }
+            return null;
         }
+
+        /// <summary>
+        /// If set to true, we will spawn a dedicated thread to prevent behavior
+        /// which could be considered an abuse of the thread pool
+        /// </summary>
+        public bool Expensive { get; set; }
+
         /// <summary>
         /// Executes a packet in an asynchronous manner
         /// </summary>
@@ -70,7 +86,9 @@ namespace Sachiel.Messages.Packets
             if (Handler == null) throw new InvalidOperationException("No packet handler has been set");
             if (Message == null) throw new InvalidOperationException("No message has been set");
             dynamic handler = Activator.CreateInstance(Handler);
-            Task.Run(() => { handler.HandlePacket(consumer, this); });
+            Task.Factory.StartNew(() => { handler.HandlePacket(consumer, this); }, CancellationToken.None,
+                Expensive ? TaskCreationOptions.LongRunning : TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default);
         }
     }
 }

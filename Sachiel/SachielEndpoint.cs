@@ -16,5 +16,11 @@ namespace Sachiel
         /// The endpoint handler
         /// </summary>
         public Type Handler { get; set; }
+
+        /// <summary>
+        /// If set to true, we will spawn a dedicated thread to prevent behavior
+        /// which could be considered an abuse of the thread pool
+        /// </summary>
+        public bool Expensive { get; set; }
     }
 }

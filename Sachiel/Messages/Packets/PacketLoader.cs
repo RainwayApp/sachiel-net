@@ -16,6 +16,7 @@ namespace Sachiel.Messages.Packets
     public class PacketInfo
     {
         public Type Handler { get; set; }
+        public bool Expensive { get; set; }
         public Type Type { get; set; }
     }
 
@@ -33,6 +34,9 @@ namespace Sachiel.Messages.Packets
 
         [ProtoMember(3)]
         public string Endpoint { get; set; }
+
+        [ProtoMember(4)]
+        public bool Expensive { get; set; }
     }
 
     public static class PacketLoader
@@ -60,7 +64,7 @@ namespace Sachiel.Messages.Packets
                 {
                     return t;
                 }
-                if (t.FullName.Equals(v))
+                if (t.FullName != null && t.FullName.Equals(v))
                 {
                     return t;
                 }
@@ -100,7 +104,8 @@ namespace Sachiel.Messages.Packets
                 {
                     Type = model.FullName,
                     Handler = sachielInfo.Handler.FullName,
-                    Endpoint = sachielInfo.Name
+                    Endpoint = sachielInfo.Name,
+                    Expensive = sachielInfo.Expensive
                 }).ToList();
             return loaders;
         }
@@ -215,6 +220,7 @@ namespace Sachiel.Messages.Packets
             {
                 var endpointName = packet.Endpoint;
                 var handlerName = packet.Handler;
+                var expensive = packet.Expensive;
                 var type = GetType(packet.Type);
                 if (type == null)
                 {
@@ -230,7 +236,8 @@ namespace Sachiel.Messages.Packets
                 Packets.Add(endpointName, new PacketInfo
                 {
                     Type = type,
-                    Handler = handler
+                    Handler = handler,
+                    Expensive = expensive
                 });
             }
         }

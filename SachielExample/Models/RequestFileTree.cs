@@ -6,7 +6,7 @@ using SachielExample.Handlers;
 namespace SachielExample.Models
 {
     [ProtoContract]
-    [SachielEndpoint(Name = "RequestFileTree", Handler = typeof(FilePacketHandler))]
+    [SachielEndpoint(Name = "RequestFileTree", Handler = typeof(FilePacketHandler), Expensive = true)]
     public class RequestFileTree : Message
     {
         [ProtoMember(1)]

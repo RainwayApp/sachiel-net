@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using ProtoBuf;
 using Sachiel.Extensions.Arrays;
 using Sachiel.Extensions.Binary;
@@ -202,7 +203,7 @@ namespace Sachiel.Messages
         ///   If you are attempting to serialize a request endpoint, set includeEndpointAsHeader to true to automatically set the header. 
         /// </summary>
         /// <returns></returns>
-        public byte[] Serialize(bool includeEndpointAsHeader = false)
+        public async Task<byte[]> Serialize(bool includeEndpointAsHeader = false)
         {
             if (!IsCompatibile(Source.GetType()))
                 throw new InvalidSerializationException($"{Source.GetType()} is not based on Message.");
@@ -225,8 +226,8 @@ namespace Sachiel.Messages
                 using (var headerStream = new MemoryStream())
                 {
                     Serialize(headerStream, Header);
-                    UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong) headerStream.Length), true);
-                    UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
+                    await UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong) headerStream.Length), true);
+                    await UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
                     Serialize(messageStream, Source);
                 }
                 return messageStream.ToArray();

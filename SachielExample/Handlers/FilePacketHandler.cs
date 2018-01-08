@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using ProtoBuf;
 using Sachiel;
 using Sachiel.Messages;
@@ -37,14 +38,15 @@ namespace SachielExample.Handlers
             }
         }
 
-        private void RequestFileTree()
+        private async void RequestFileTree()
         {
             var fileRequest = _message.Deserialize<RequestFileTree>();
 
             Console.WriteLine(fileRequest.Path);
             Console.WriteLine($"Request for {fileRequest.Path} received");
-            var response = new TreeResponse {Tree = null};
-            _callback.Response = response.Serialize();
+            var response = new TreeResponse {Tree = new FileTree("D:\\ffmpeg-20170804-44e9783-win64-static", true) };
+            _callback.Response = await response.Serialize();
+   
             _consumer.Reply(_callback);
         }
     }

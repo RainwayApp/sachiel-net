@@ -35,7 +35,7 @@ namespace SachielExample
     internal class Program
     {
 
-        private static void RunExample()
+        private static async void RunExample()
         {
 
 
@@ -59,7 +59,7 @@ namespace SachielExample
             var consomer = new ConsumerExample();
 
             //serialize your model to a Sachiel buffer. 
-            var data = request.Serialize(true);
+            var data = await request.Serialize(true);
 
             //Load a packet from a buffer
             var packet = Packet.GetPacket(data);

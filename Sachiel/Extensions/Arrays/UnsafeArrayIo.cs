@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 
 namespace Sachiel.Extensions.Arrays
 {
@@ -15,6 +17,39 @@ namespace Sachiel.Extensions.Arrays
     /// </summary>
     public static class UnsafeArrayIo
     {
+
+
+        public static byte[] SerializeToByteArray(this object obj)
+        {
+            if (obj == null)
+            {
+                return null;
+            }
+            var bf = new BinaryFormatter();
+            using (var ms = new MemoryStream())
+            {
+                bf.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+
+        public static async Task<T> Deserialize<T>(this byte[] byteArray) where T : class
+        {
+            if (byteArray == null)
+            {
+                return null;
+            }
+            using (var memStream = new MemoryStream())
+            {
+                var binForm = new BinaryFormatter();
+                await memStream.WriteAsync(byteArray, 0, byteArray.Length);
+                memStream.Seek(0, SeekOrigin.Begin);
+                var obj = (T)binForm.Deserialize(memStream);
+                return obj;
+            }
+        }
+
+
         /// <summary>
         /// Reads an array of type T[] directly from the stream without doing any processing. Assumes the endianess of the values
         /// are the same as the processor (which means you cannot have used a regular <see cref="BinaryWriter"/> to write it, since
@@ -25,7 +60,7 @@ namespace Sachiel.Extensions.Arrays
         /// <param name="stream">Stream to read from.</param>
         /// <param name="elementCount">Number of elements to read (not the number of bytes -- to read 2 ints, pass 2, not 8).</param>
         /// <returns>The correctly typed array.</returns>
-        public static T[] ReadArray<T>(Stream stream, int elementCount) where T : struct
+        public static async Task<T[]> ReadArray<T>(Stream stream, int elementCount) where T : struct
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (elementCount <= 0) return new T[0];
@@ -41,7 +76,7 @@ namespace Sachiel.Extensions.Arrays
             {
                 buffer = new byte[nBytes];
             }
-            stream.Read(buffer, 0, nBytes);
+            await stream.ReadAsync(buffer, 0, nBytes);
             return (T[])converter.ConvertFromByte(buffer, elementCount);
         }
 
@@ -86,7 +121,7 @@ namespace Sachiel.Extensions.Arrays
         /// <param name="isThreadSafe">If you are 200% absolutely sure no other threads will access the array, you can set this to true
         /// to prevent a temporary copy from being made. If you set this to true and another thread is accessing the array, the runtime
         /// will likely crash or unexpected behavior will happen. If even a tiny bit unsure, leave this as false.</param>
-        public static void WriteArray<T>(Stream stream, T[] array, bool isThreadSafe = false) where T : struct
+        public static async Task WriteArray<T>(Stream stream, T[] array, bool isThreadSafe = false) where T : struct
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (array == null || array.Length == 0) return;
@@ -106,7 +141,7 @@ namespace Sachiel.Extensions.Arrays
             var buffer = converter.ConvertToByte(array, nBytes);
             try
             {
-                stream.Write(buffer, 0, buffer.Length);
+                await stream.WriteAsync(buffer, 0, buffer.Length);
             }
             finally
             {

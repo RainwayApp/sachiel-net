@@ -58,8 +58,7 @@ namespace Sachiel.Extensions
                 }
                 catch (Exception)
                 {
-
-                    
+                    // ignored
                 }
             }
             return assemblies.Distinct().ToArray();
