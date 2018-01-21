@@ -28,4 +28,4 @@ If you wish to help port Sachiel to another langauge feel free, we're happy to l
 
 ### Docs
 
-Right now sachiel-net isn't fully documented but if you want to read up on how to get started with it, go here: https://rainwayapp.github.io/sachiel-net/docs/getstarted.md
+Right now sachiel-net isn't fully documented but if you want to read up on how to get started with it, go here: https://rainwayapp.github.io/sachiel-net/gettingstarted
