@@ -22,6 +22,11 @@ namespace Sachiel.Messages
     [ProtoContract]
     public class Message
     {
+        private enum  Target
+        {
+            Source,
+            Header
+        }
         /// <summary>
         ///     Take a raw message buffer and extract the endpoint name and serialized proto buffer.
         /// </summary>
@@ -186,15 +191,17 @@ namespace Sachiel.Messages
         }
 
 
-        private void Serialize(MemoryStream stream, object value)
+        private void Serialize(ref MemoryStream stream, Target target)
         {
+
+            
             if (PacketLoader.Serializer != null)
             {
-                PacketLoader.Serializer.Serialize(stream, value);
+                PacketLoader.Serializer.Serialize(stream, target == Target.Header ? Header : Source);
             }
             else
             {
-                Serializer.Serialize(stream, value);
+                Serializer.Serialize(stream, target == Target.Header ? Header : Source);
             }
         }
 
@@ -205,32 +212,36 @@ namespace Sachiel.Messages
         /// <returns></returns>
         public async Task<byte[]> Serialize(bool includeEndpointAsHeader = false)
         {
-            if (!IsCompatibile(Source.GetType()))
-                throw new InvalidSerializationException($"{Source.GetType()} is not based on Message.");
+            var messageStream = new MemoryStream();
+            var headerStream = new MemoryStream();
+            try
+            {
+                if (!IsCompatibile(Source.GetType()))
+                    throw new InvalidSerializationException($"{Source.GetType()} is not based on Message.");
 
-            // For IPC purposes people might wish to use request both ways, this should allow them to do that. 
-            if (includeEndpointAsHeader)
-            {
-                var attribute = Source.GetType().GetTypeInfo().GetCustomAttribute<SachielEndpoint>(false);
-                if (attribute == null)
-                    throw new InvalidOperationException("No SachielEndpoint attribute is present on message.");
-                Header.Endpoint = attribute?.Name;
-            }
-            //Throw is the header is null.
-            if (string.IsNullOrEmpty(Header?.Endpoint))
-            {
-                throw new InvalidOperationException("Message headers cannot be null.");
-            }
-            using (var messageStream = new MemoryStream())
-            {
-                using (var headerStream = new MemoryStream())
+                // For IPC purposes people might wish to use request both ways, this should allow them to do that. 
+                if (includeEndpointAsHeader)
                 {
-                    Serialize(headerStream, Header);
-                    await UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong) headerStream.Length), true);
-                    await UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
-                    Serialize(messageStream, Source);
+                    var attribute = Source.GetType().GetTypeInfo().GetCustomAttribute<SachielEndpoint>(false);
+                    if (attribute == null)
+                        throw new InvalidOperationException("No SachielEndpoint attribute is present on message.");
+                    Header.Endpoint = attribute?.Name;
                 }
+                //Throw is the header is null.
+                if (string.IsNullOrEmpty(Header?.Endpoint))
+                {
+                    throw new InvalidOperationException("Message headers cannot be null.");
+                }
+                Serialize(ref headerStream, Target.Header);
+                await UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong)headerStream.Length), true);
+                await UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
+                Serialize(ref messageStream, Target.Source);
                 return messageStream.ToArray();
+            }
+            finally
+            {
+                messageStream?.Dispose();
+                headerStream?.Dispose();
             }
         }
     }
