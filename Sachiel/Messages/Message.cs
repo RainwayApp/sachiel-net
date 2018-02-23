@@ -210,9 +210,9 @@ namespace Sachiel.Messages
         ///   If you are attempting to serialize a request endpoint, set includeEndpointAsHeader to true to automatically set the header. 
         /// </summary>
         /// <returns></returns>
-        public async Task<byte[]> Serialize(bool includeEndpointAsHeader = false)
+        public async Task<byte[]> Serialize(int allocate = 0, bool includeEndpointAsHeader = false)
         {
-            var messageStream = new MemoryStream();
+            var messageStream = new MemoryStream(allocate);
             var headerStream = new MemoryStream();
             try
             {

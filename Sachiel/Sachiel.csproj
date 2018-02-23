@@ -5,7 +5,7 @@
     <RootNamespace>Sachiel</RootNamespace>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>SachielKey.pfx</AssemblyOriginatorKeyFile>
-    <Version>1.9.0</Version>
+    <Version>1.9.5</Version>
     <Copyright>Copyright ©  Rainway, Inc. 2017</Copyright>
     <Description>A simple to use messaging framework built on protocol buffers.
 </Description>
