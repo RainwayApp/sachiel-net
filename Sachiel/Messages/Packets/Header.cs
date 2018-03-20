@@ -1,4 +1,5 @@
 ﻿using ProtoBuf;
+using ProtoBuf.Meta;
 
 namespace Sachiel.Messages.Packets
 {
@@ -16,7 +17,7 @@ namespace Sachiel.Messages.Packets
         /// <returns></returns>
         public override string ToString()
         {
-            return MessageUtils.GetSchema(GetType());
+            return MessageUtils.GetSchema(GetType(), ProtoSyntax.Proto2);
         }
     }
 }
