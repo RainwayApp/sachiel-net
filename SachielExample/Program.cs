@@ -59,7 +59,7 @@ namespace SachielExample
             var consomer = new ConsumerExample();
 
             //serialize your model to a Sachiel buffer. 
-            var data = await request.Serialize(true);
+            var data = await request.Serialize(0, true);
 
             //Load a packet from a buffer
             var packet = Packet.GetPacket(data);

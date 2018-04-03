@@ -152,14 +152,12 @@ namespace Sachiel.Messages.Packets
             }
         }
 
-
-
         /// <summary>
         ///     Saves all response/request models to raw schemas.
         ///     Call after loading all your packets.
         /// </summary>
         /// <param name="path"></param>
-        public static void DumpSchemas(string path, bool removePackage = true)
+        public static void DumpSchemas(string path, SchemaOptions options = null)
         {
             var requestPath = Path.Combine(path, "Request");
             var responsePath = Path.Combine(path, "Responses");
@@ -168,30 +166,37 @@ namespace Sachiel.Messages.Packets
             //save our packets
             foreach (var packet in Packets.ToList())
             {
-                var requestName = Path.Combine(requestPath, $"{packet.Key}.schema");
-                File.WriteAllText(requestName, GetSchemaForType(packet.Value.Type, removePackage));
+                var requestName = Path.Combine(requestPath, $"{packet.Key}.{options?.Extension ?? "proto"}");
+                File.WriteAllText(requestName, GetSchemaForType(packet.Value.Type, options, true));
             }
             foreach (var type in GetTypesWithSachielHeader())
             {
                 var endpoint = type.GetTypeInfo().GetCustomAttribute<SachielHeader>(false).Endpoint;
-                var responseName = Path.Combine(responsePath, $"{endpoint}.schema");
-                File.WriteAllText(responseName, GetSchemaForType(type, removePackage));
+                var responseName = Path.Combine(responsePath, $"{endpoint}.{options?.Extension ?? "proto"}");
+                File.WriteAllText(responseName, GetSchemaForType(type, options, false));
             }
         }
 
-        private static string GetSchemaForType(Type type, bool removePackage)
+        private static string GetSchemaForType(Type type, SchemaOptions options = null, bool isRequest = false)
         {
-            var schema = MessageUtils.GetSchema(type);
-            if (removePackage)
+            var schema = MessageUtils.GetSchema(type, options?.Syntax ?? ProtoSyntax.Proto2);
+            if (options != null)
             {
                 var builder = new StringBuilder();
                 foreach (var myString in schema.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
                 {
-                    if (myString.Contains("package"))
+                    if (myString.StartsWith("package") && options.RemovePackage)
                     {
-                        continue;
                     }
-                    builder.AppendLine(myString);
+                    else
+                    {
+                        builder.AppendLine(myString);
+                    }
+                    
+                    if(myString.StartsWith("package"))
+                    {
+                        options.BuildString(builder, type, isRequest);
+                    }
                 }
                 schema = builder.ToString();
             }

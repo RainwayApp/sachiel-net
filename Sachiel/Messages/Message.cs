@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using ProtoBuf;
+using ProtoBuf.Meta;
 using Sachiel.Extensions.Arrays;
 using Sachiel.Extensions.Binary;
 using Sachiel.Messages.Exceptions;
@@ -113,9 +114,9 @@ namespace Sachiel.Messages
         ///     Returns the schema for your Source
         /// </summary>
         /// <returns></returns>
-        public string GetSchema()
+        public string GetSchema(ProtoSyntax syntax = ProtoSyntax.Proto2)
         {
-            return MessageUtils.GetSchema(Source.GetType());
+            return MessageUtils.GetSchema(Source.GetType(), syntax);
         }
 
         /// <summary>

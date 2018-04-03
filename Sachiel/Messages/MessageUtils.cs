@@ -23,11 +23,11 @@ namespace Sachiel.Messages
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static string GetSchema(Type type)
+        public static string GetSchema(Type type, ProtoSyntax syntax = ProtoSyntax.Proto2)
         {
-            var method = typeof(Serializer).GetMethod("GetProto", Type.EmptyTypes).MakeGenericMethod(type);
-            method.Invoke(null, null);
-            return (string) method.Invoke(null, null);
+            var method = typeof(Serializer).GetMethod("GetProto", new Type[] { typeof(ProtoSyntax) }).MakeGenericMethod(type);
+            method.Invoke(null, new object[] { syntax });
+            return (string) method.Invoke(null, new object[] { syntax });
         }
     }
 }
