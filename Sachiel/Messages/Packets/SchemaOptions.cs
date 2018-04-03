@@ -20,41 +20,41 @@ namespace Sachiel.Messages.Packets
 
         public void BuildString(StringBuilder builder, Type type, bool isRequest)
         {
-            builder.AppendLine($"option optimize_for = {Enum.GetName(typeof(SchemaOptimization), OptimizeFor)}");
+            builder.AppendLine($"option optimize_for = {Enum.GetName(typeof(SchemaOptimization), OptimizeFor)};");
 
             if (JavaPackage != null)
             {
-                builder.AppendLine($"option java_package = \"{JavaPackage + (SuffixKind ? $".{(isRequest ? "request" : "response")}" : string.Empty)}\"");
+                builder.AppendLine($"option java_package = \"{JavaPackage + (SuffixKind ? $".{(isRequest ? "request" : "response")}" : string.Empty)}\";");
             }
 
             if (JavaMultipleFiles == true)
             {
-                builder.AppendLine($"option java_multiple_files = true");
+                builder.AppendLine($"option java_multiple_files = true;");
             }
 
             if (CCEnableArenas == true)
             {
-                builder.AppendLine($"option cc_enable_arenas = true");
+                builder.AppendLine($"option cc_enable_arenas = true;");
             }
 
             if (ObjCClassPrefix != null)
             {
-                builder.AppendLine($"option obj_class_prefix = \"{ObjCClassPrefix}\"");
+                builder.AppendLine($"option obj_class_prefix = \"{ObjCClassPrefix}\";");
             }
 
             if (SaveCSharpNamespace == true)
             {
-                builder.AppendLine($"option csharp_namespace = \"{type.Namespace}\"");
+                builder.AppendLine($"option csharp_namespace = \"{type.Namespace}\";");
             }
             else if (CSharpNamespace != null)
             {
-                builder.AppendLine($"option csharp_namespace = \"{CSharpNamespace + (SuffixKind ? $".{(isRequest ? "request" : "response")}" : string.Empty)}\"");
+                builder.AppendLine($"option csharp_namespace = \"{CSharpNamespace + (SuffixKind ? $".{(isRequest ? "request" : "response")}" : string.Empty)}\";");
             }
 
             if (GoPackage != null)
             {
                 var go = GoPackage + (SuffixKind ? $"/{(isRequest ? "request" : "response")}" : string.Empty);
-                builder.AppendLine($"option go_package = \"{go}\"");
+                builder.AppendLine($"option go_package = \"{go}\";");
             }
         }
 
@@ -91,6 +91,7 @@ namespace Sachiel.Messages.Packets
         public override int GetHashCode()
         {
             var hashCode = 21633992;
+            hashCode = hashCode * -1521134295 + Syntax.GetHashCode();
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Extension);
             hashCode = hashCode * -1521134295 + RemovePackage.GetHashCode();
             hashCode = hashCode * -1521134295 + SuffixKind.GetHashCode();
