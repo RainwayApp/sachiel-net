@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProtoBuf.Meta;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -16,21 +17,6 @@ namespace Sachiel.Messages.Packets
     public class SchemaOptions
     {
         public SchemaOptions() { }
-
-        public SchemaOptions(string extension, bool removePackage, bool suffixKind, string javaPackage, bool javaMultipleFiles, SchemaOptimization optimizeFor, bool cCEnableArenas, string objCClassPrefix, bool saveCSharpNamespace, string cSharpNamespace, string goPackage)
-        {
-            Extension = extension;
-            RemovePackage = removePackage;
-            SuffixKind = suffixKind;
-            JavaPackage = javaPackage;
-            JavaMultipleFiles = javaMultipleFiles;
-            OptimizeFor = optimizeFor;
-            CCEnableArenas = cCEnableArenas;
-            ObjCClassPrefix = objCClassPrefix;
-            SaveCSharpNamespace = saveCSharpNamespace;
-            CSharpNamespace = cSharpNamespace;
-            GoPackage = goPackage;
-        }
 
         public void BuildString(StringBuilder builder, Type type, bool isRequest)
         {
@@ -68,10 +54,11 @@ namespace Sachiel.Messages.Packets
             if (GoPackage != null)
             {
                 var go = GoPackage + (SuffixKind ? $"/{(isRequest ? "request" : "response")}" : string.Empty);
-                builder.AppendLine($"option go_package = \"{go};{Path.GetFileName(go)}\"");
+                builder.AppendLine($"option go_package = \"{go}\"");
             }
         }
 
+        public ProtoSyntax Syntax { get; set; } = ProtoSyntax.Proto2;
         public string Extension { get; set; } = "proto";
         public bool RemovePackage { get; set; } = false;
         public bool SuffixKind { get; set; } = false;

@@ -157,7 +157,7 @@ namespace Sachiel.Messages.Packets
         ///     Call after loading all your packets.
         /// </summary>
         /// <param name="path"></param>
-        public static void DumpSchemas(string path, SchemaOptions options = null, ProtoSyntax syntax = ProtoSyntax.Proto2)
+        public static void DumpSchemas(string path, SchemaOptions options = null)
         {
             var requestPath = Path.Combine(path, "Request");
             var responsePath = Path.Combine(path, "Responses");
@@ -167,19 +167,19 @@ namespace Sachiel.Messages.Packets
             foreach (var packet in Packets.ToList())
             {
                 var requestName = Path.Combine(requestPath, $"{packet.Key}.{options?.Extension ?? "proto"}");
-                File.WriteAllText(requestName, GetSchemaForType(packet.Value.Type, syntax, options, true));
+                File.WriteAllText(requestName, GetSchemaForType(packet.Value.Type, options, true));
             }
             foreach (var type in GetTypesWithSachielHeader())
             {
                 var endpoint = type.GetTypeInfo().GetCustomAttribute<SachielHeader>(false).Endpoint;
                 var responseName = Path.Combine(responsePath, $"{endpoint}.{options?.Extension ?? "proto"}");
-                File.WriteAllText(responseName, GetSchemaForType(type, syntax, options, false));
+                File.WriteAllText(responseName, GetSchemaForType(type, options, false));
             }
         }
 
-        private static string GetSchemaForType(Type type, ProtoSyntax syntax = ProtoSyntax.Proto2, SchemaOptions options = null, bool isRequest = false)
+        private static string GetSchemaForType(Type type, SchemaOptions options = null, bool isRequest = false)
         {
-            var schema = MessageUtils.GetSchema(type, syntax);
+            var schema = MessageUtils.GetSchema(type, options?.Syntax ?? ProtoSyntax.Proto2);
             if (options != null)
             {
                 var builder = new StringBuilder();
