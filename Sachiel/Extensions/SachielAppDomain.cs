@@ -13,6 +13,8 @@ namespace Sachiel.Extensions
     {
         public static SachielAppDomain CurrentDomain { get; }
 
+        public List<Assembly> Assemblies { get; set; }
+
         static SachielAppDomain()
         {
             CurrentDomain = new SachielAppDomain();
@@ -26,12 +28,19 @@ namespace Sachiel.Extensions
         public Assembly[] GetAssemblies()
         {
             Assembly[] ass = null;
-            #if NET_CORE
-            ass =  GetNetCoreAssemblies();
-            #else
-            ass = GetFrameAssemblies();
-            #endif
-          
+            if (Assemblies != null)
+            {
+                ass = Assemblies.ToArray();
+            }
+            else
+            {
+#if NET_CORE
+                ass = GetNetCoreAssemblies();
+#else
+                ass = GetFrameAssemblies();
+#endif
+            }
+
             return ass;
         }
 

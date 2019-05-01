@@ -233,9 +233,13 @@ namespace Sachiel.Messages
                     throw new InvalidOperationException("Message headers cannot be null.");
                 }
                 Serialize(ref headerStream, Target.Header);
-                await UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong)headerStream.Length), true);
-                await UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
-                Serialize(ref messageStream, Target.Source);
+                using (var writer = new BinaryWriter(messageStream))
+                {
+                    writer.Write(BinaryExtensions.EncodeVariableLengthQuantity((ulong) headerStream.Length));
+                    writer.Write(headerStream.ToArray());
+
+                    Serialize(ref messageStream, Target.Source);
+                }
                 return messageStream.ToArray();
             }
             finally
