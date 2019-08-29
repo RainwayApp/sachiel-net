@@ -18,6 +18,14 @@ namespace Sachiel.Messages
             }
         }
 
+        // TODO Find a better way?
+        public static unsafe T Deserialize<T>(ReadOnlySpan<byte> data)
+        {
+            using (var ms = new MemoryStream(data.ToArray())) {
+                return Serializer.Deserialize<T>(ms);
+            }
+        }
+
         /// <summary>
         ///  We use reflection to get the Proto Schema from protobuff-net
         /// </summary>

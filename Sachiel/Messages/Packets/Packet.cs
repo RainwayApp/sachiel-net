@@ -55,6 +55,18 @@ namespace Sachiel.Messages.Packets
         {
             if (data.Length == 0) return null;
             var message = new Message(data);
+            return GetPacket(message);
+        }
+
+        public static Packet GetPacket(ReadOnlySpan<byte> data)
+        {
+            if (data.Length == 0) return null;
+            var message = new Message(data);
+            return GetPacket(message);
+        }
+
+        public static Packet GetPacket(Message message)
+        {
             var packetInfo = GetPacketInfo(message.Header.Endpoint);
             if (packetInfo == null) return null;
             var method = message.GetType().GetMethod("Deserialize")?.MakeGenericMethod(packetInfo.Type);

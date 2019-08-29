@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using ProtoBuf;
+using Sachiel.Extensions;
 using Sachiel.Extensions.Arrays;
 using Sachiel.Extensions.Binary;
 using Sachiel.Messages.Exceptions;
@@ -48,6 +49,14 @@ namespace Sachiel.Messages
                     Payload = segmentReader.ReadBytes(segmentReader.AvailableData());
                 }
             }
+        }
+
+        public Message(ReadOnlySpan<byte> data)
+        {
+            int offset = 0;
+            int length = data.ReadVariableLengthQuantity(ref offset);
+            Header = GetHeader(data.Slice(offset, length));
+            Payload = data.Slice(offset + length).ToArray();
         }
 
         /// <summary>
@@ -127,6 +136,11 @@ namespace Sachiel.Messages
         private unsafe Header GetHeader(byte* data, int length)
         {
             return MessageUtils.Deserialize<Header>(data, length);
+        }
+
+        private Header GetHeader(ReadOnlySpan<byte> data)
+        {
+            return MessageUtils.Deserialize<Header>(data);
         }
 
         /// <summary>
