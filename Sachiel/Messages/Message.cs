@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using ProtoBuf;
@@ -22,11 +20,6 @@ namespace Sachiel.Messages
     [ProtoContract]
     public class Message
     {
-        private enum  Target
-        {
-            Source,
-            Header
-        }
         /// <summary>
         ///     Take a raw message buffer and extract the endpoint name and serialized proto buffer.
         /// </summary>
@@ -45,19 +38,15 @@ namespace Sachiel.Messages
                     {
                         Header = GetHeader(headerData, length);
                     }
+
                     Payload = segmentReader.ReadBytes(segmentReader.AvailableData());
                 }
             }
         }
 
-        /// <summary>
-        /// Contains the payload of a Sachiel message.
-        /// </summary>
-        internal byte[] Payload { get; set; }
-
 
         /// <summary>
-        /// Initiate a sachiel message and auto assign values if a SachielHeader attribute is present. 
+        ///     Initiate a sachiel message and auto assign values if a SachielHeader attribute is present.
         /// </summary>
         public Message()
         {
@@ -73,6 +62,11 @@ namespace Sachiel.Messages
             Header.Endpoint = info.Endpoint;
         }
 
+        /// <summary>
+        ///     Contains the payload of a Sachiel message.
+        /// </summary>
+        internal byte[] Payload { get; set; }
+
 
         /// <summary>
         ///     Endpoint and Synk key information are stored here and used to define each message so they can be identfied for
@@ -87,16 +81,14 @@ namespace Sachiel.Messages
 
 
         /// <summary>
-        ///     Deserializes a Sachiel payload into its original model, if this method was already called it returns a cached copy of the payload.
+        ///     Deserializes a Sachiel payload into its original model, if this method was already called it returns a cached copy
+        ///     of the payload.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         public T Deserialize<T>()
         {
-            if (Source != null)
-            {
-                return (T) Source;
-            }
+            if (Source != null) return (T) Source;
             unsafe
             {
                 if (!IsCompatibile<T>())
@@ -119,7 +111,7 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        /// Deserializes a message header from a message block
+        ///     Deserializes a message header from a message block
         /// </summary>
         /// <param name="data"></param>
         /// <param name="length"></param>
@@ -130,7 +122,7 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        /// Check if a list contains a valid Message type object 
+        ///     Check if a list contains a valid Message type object
         /// </summary>
         /// <param name="o"></param>
         /// <returns></returns>
@@ -143,7 +135,7 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        /// Checks if a type is a List
+        ///     Checks if a type is a List
         /// </summary>
         /// <param name="o"></param>
         /// <returns></returns>
@@ -154,7 +146,7 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        /// Checks if a type is a Dictionary
+        ///     Checks if a type is a Dictionary
         /// </summary>
         /// <param name="o"></param>
         /// <returns></returns>
@@ -165,7 +157,7 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        /// Determins if a given type can be serialized 
+        ///     Determins if a given type can be serialized
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -175,7 +167,7 @@ namespace Sachiel.Messages
         }
 
         /// <summary>
-        /// Determins if a given type can be serialized 
+        ///     Determins if a given type can be serialized
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
@@ -193,21 +185,16 @@ namespace Sachiel.Messages
 
         private void Serialize(ref MemoryStream stream, Target target)
         {
-
-            
             if (PacketLoader.Serializer != null)
-            {
                 PacketLoader.Serializer.Serialize(stream, target == Target.Header ? Header : Source);
-            }
             else
-            {
                 Serializer.Serialize(stream, target == Target.Header ? Header : Source);
-            }
         }
 
         /// <summary>
-        ///   Serializes a Message to a Sachiel buffer and sets the Raw property.
-        ///   If you are attempting to serialize a request endpoint, set includeEndpointAsHeader to true to automatically set the header. 
+        ///     Serializes a Message to a Sachiel buffer and sets the Raw property.
+        ///     If you are attempting to serialize a request endpoint, set includeEndpointAsHeader to true to automatically set the
+        ///     header.
         /// </summary>
         /// <returns></returns>
         public async Task<byte[]> Serialize(int allocate = 0, bool includeEndpointAsHeader = false)
@@ -227,13 +214,13 @@ namespace Sachiel.Messages
                         throw new InvalidOperationException("No SachielEndpoint attribute is present on message.");
                     Header.Endpoint = attribute?.Name;
                 }
+
                 //Throw is the header is null.
                 if (string.IsNullOrEmpty(Header?.Endpoint))
-                {
                     throw new InvalidOperationException("Message headers cannot be null.");
-                }
                 Serialize(ref headerStream, Target.Header);
-                await UnsafeArrayIo.WriteArray(messageStream, BinaryExtensions.EncodeVariableLengthQuantity((ulong)headerStream.Length), true);
+                await UnsafeArrayIo.WriteArray(messageStream,
+                    BinaryExtensions.EncodeVariableLengthQuantity((ulong) headerStream.Length), true);
                 await UnsafeArrayIo.WriteArray(messageStream, headerStream.ToArray(), true);
                 Serialize(ref messageStream, Target.Source);
                 return messageStream.ToArray();
@@ -243,6 +230,12 @@ namespace Sachiel.Messages
                 messageStream?.Dispose();
                 headerStream?.Dispose();
             }
+        }
+
+        private enum Target
+        {
+            Source,
+            Header
         }
     }
 }

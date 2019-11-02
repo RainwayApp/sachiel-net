@@ -17,6 +17,5 @@ namespace Sachiel.Messages.Exceptions
             : base(message, inner)
         {
         }
-
     }
 }

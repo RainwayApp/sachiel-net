@@ -26,17 +26,13 @@ namespace Sachiel.Messages.Packets
     [ProtoContract]
     internal class LoaderModel : Message
     {
-        [ProtoMember(1)]
-        public string Handler { get; set; }
+        [ProtoMember(1)] public string Handler { get; set; }
 
-        [ProtoMember(2)]
-        public string Type { get; set; }
+        [ProtoMember(2)] public string Type { get; set; }
 
-        [ProtoMember(3)]
-        public string Endpoint { get; set; }
+        [ProtoMember(3)] public string Endpoint { get; set; }
 
-        [ProtoMember(4)]
-        public bool Expensive { get; set; }
+        [ProtoMember(4)] public bool Expensive { get; set; }
     }
 
     public static class PacketLoader
@@ -53,26 +49,15 @@ namespace Sachiel.Messages.Packets
         /// </summary>
         private static Type GetType(string v)
         {
-            if (Type.GetType(v) != null)
-            {
-                return Type.GetType(v);
-            }
+            if (Type.GetType(v) != null) return Type.GetType(v);
             foreach (var a in SachielAppDomain.CurrentDomain.GetAssemblies())
             foreach (var t in a.GetTypes())
             {
-                if (t.ToString().Equals(v))
-                {
-                    return t;
-                }
-                if (t.FullName != null && t.FullName.Equals(v))
-                {
-                    return t;
-                }
-                if (t.Name.Equals(v))
-                {
-                    return t;
-                }
+                if (t.ToString().Equals(v)) return t;
+                if (t.FullName != null && t.FullName.Equals(v)) return t;
+                if (t.Name.Equals(v)) return t;
             }
+
             return null;
         }
 
@@ -89,7 +74,6 @@ namespace Sachiel.Messages.Packets
                 select type).ToList();
         }
 
-       
 
         /// <summary>
         ///     Loop over each class with a SachielEndpoint and returns a list
@@ -111,47 +95,32 @@ namespace Sachiel.Messages.Packets
         }
 
         /// <summary>
-        /// Allows for ahead of time compiling and analysis of messages.
-        /// This method will analyse from the root-types, adding in any additional types needed as it goes, setting the compiled generated instance Serializer instance.
+        ///     Allows for ahead of time compiling and analysis of messages.
+        ///     This method will analyse from the root-types, adding in any additional types needed as it goes, setting the
+        ///     compiled generated instance Serializer instance.
         /// </summary>
         public static void Compile()
         {
             var model = TypeModel.Create();
             model.Add(typeof(Header), true);
             model.Add(typeof(Message), true);
-            foreach (var packet in Packets.Values)
-            {
-                model.Add(packet.Type, true);
-            }
-            foreach (var type in GetTypesWithSachielHeader())
-            {
-                model.Add(type, true);
-            }
+            foreach (var packet in Packets.Values) model.Add(packet.Type, true);
+            foreach (var type in GetTypesWithSachielHeader()) model.Add(type, true);
             Serializer = model.Compile();
         }
 
         /// <summary>
-        /// Allows for partial ahead of time compiling and analysis of messages.
-        /// This method will not fully expand the models
+        ///     Allows for partial ahead of time compiling and analysis of messages.
+        ///     This method will not fully expand the models
         /// </summary>
         public static void CompileInPlace(int iterations = 5)
         {
             RuntimeTypeModel.Default.Add(typeof(Header), true);
             RuntimeTypeModel.Default.Add(typeof(Message), true);
-            foreach (var packet in Packets.Values)
-            {
-                RuntimeTypeModel.Default.Add(packet.Type, true);
-            }
-            foreach (var type in GetTypesWithSachielHeader())
-            {
-                RuntimeTypeModel.Default.Add(type, true);
-            }
-            for (var i = 0; i < iterations; i++)
-            {
-                RuntimeTypeModel.Default.CompileInPlace();
-            }
+            foreach (var packet in Packets.Values) RuntimeTypeModel.Default.Add(packet.Type, true);
+            foreach (var type in GetTypesWithSachielHeader()) RuntimeTypeModel.Default.Add(type, true);
+            for (var i = 0; i < iterations; i++) RuntimeTypeModel.Default.CompileInPlace();
         }
-
 
 
         /// <summary>
@@ -171,6 +140,7 @@ namespace Sachiel.Messages.Packets
                 var requestName = Path.Combine(requestPath, $"{packet.Key}.schema");
                 File.WriteAllText(requestName, GetSchemaForType(packet.Value.Type, removePackage));
             }
+
             foreach (var type in GetTypesWithSachielHeader())
             {
                 var endpoint = type.GetTypeInfo().GetCustomAttribute<SachielHeader>(false).Endpoint;
@@ -185,16 +155,16 @@ namespace Sachiel.Messages.Packets
             if (removePackage)
             {
                 var builder = new StringBuilder();
-                foreach (var myString in schema.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+                foreach (var myString in schema.Split(new[] {Environment.NewLine},
+                    StringSplitOptions.RemoveEmptyEntries))
                 {
-                    if (myString.Contains("package"))
-                    {
-                        continue;
-                    }
+                    if (myString.Contains("package")) continue;
                     builder.AppendLine(myString);
                 }
+
                 schema = builder.ToString();
             }
+
             return schema;
         }
 
@@ -223,16 +193,12 @@ namespace Sachiel.Messages.Packets
                 var expensive = packet.Expensive;
                 var type = GetType(packet.Type);
                 if (type == null)
-                {
                     throw new InvalidCastException(
                         $"\"{packet.Type}\" could not be found as a valid type.");
-                }
                 var handler = GetType(handlerName);
                 if (handler == null)
-                {
                     throw new InvalidCastException(
                         $"\"{packet.Handler}\" could not be found as a valid type");
-                }
                 Packets.Add(endpointName, new PacketInfo
                 {
                     Type = type,

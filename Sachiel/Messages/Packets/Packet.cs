@@ -1,43 +1,48 @@
 ﻿using System;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Sachiel.Messages.Packets
 {
     /// <summary>
-    /// Stores responses from handled packets
+    ///     Stores responses from handled packets
     /// </summary>
     public class PacketCallback
     {
         /// <summary>
-        /// The name of the completed endpoint
+        ///     The name of the completed endpoint
         /// </summary>
         public string Endpoint { get; set; }
 
         /// <summary>
-        /// The seralized response 
+        ///     The seralized response
         /// </summary>
         public byte[] Response { get; set; }
     }
 
     /// <summary>
-    /// Handles generating and storing Packet instances from serialized messages 
+    ///     Handles generating and storing Packet instances from serialized messages
     /// </summary>
     public class Packet
     {
         /// <summary>
-        /// The packet handler defined in the packet schema 
+        ///     The packet handler defined in the packet schema
         /// </summary>
         public Type Handler { get; set; }
 
         /// <summary>
-        /// The Message instance from the deserialized buffer 
+        ///     The Message instance from the deserialized buffer
         /// </summary>
         public Message Message { get; set; }
 
         /// <summary>
-        /// Checks the loaded packets for the endpoint name and attempts to find handler information.
+        ///     If set to true, we will spawn a dedicated thread to prevent behavior
+        ///     which could be considered an abuse of the thread pool
+        /// </summary>
+        public bool Expensive { get; set; }
+
+        /// <summary>
+        ///     Checks the loaded packets for the endpoint name and attempts to find handler information.
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
@@ -47,7 +52,7 @@ namespace Sachiel.Messages.Packets
         }
 
         /// <summary>
-        /// Accepts a serialized message buffer and attempts to deserialize and return a valid Packet object. 
+        ///     Accepts a serialized message buffer and attempts to deserialize and return a valid Packet object.
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
@@ -65,20 +70,15 @@ namespace Sachiel.Messages.Packets
                 {
                     Message = message,
                     Handler = packetInfo.Handler,
-                    Expensive = packetInfo.Expensive,
+                    Expensive = packetInfo.Expensive
                 };
             }
+
             return null;
         }
 
         /// <summary>
-        /// If set to true, we will spawn a dedicated thread to prevent behavior
-        /// which could be considered an abuse of the thread pool
-        /// </summary>
-        public bool Expensive { get; set; }
-
-        /// <summary>
-        /// Executes a packet in an asynchronous manner
+        ///     Executes a packet in an asynchronous manner
         /// </summary>
         /// <param name="consumer"></param>
         public void HandlePacket(Consumer consumer)

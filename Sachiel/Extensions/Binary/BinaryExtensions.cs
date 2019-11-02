@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
 
 namespace Sachiel.Extensions.Binary
 {
     internal static class BinaryExtensions
     {
         /// <summary>
-        /// Writes the specified integer as a 7-bit encoded variable-length quantity.
+        ///     Writes the specified integer as a 7-bit encoded variable-length quantity.
         /// </summary>
         /// <param name="writer"></param>
         /// <param name="integer"></param>
@@ -24,18 +21,20 @@ namespace Sachiel.Extensions.Binary
             var mask = 0x7fUL << (index * 7);
             while (index >= 0)
             {
-                var buffer = (mask & integer);
+                var buffer = mask & integer;
                 if (buffer > 0 || significantBitReached)
                 {
                     significantBitReached = true;
                     buffer >>= index * 7;
                     if (index > 0)
                         buffer |= 0x80;
-                    results.Add((byte)buffer);
+                    results.Add((byte) buffer);
                 }
+
                 mask >>= 7;
                 index--;
             }
+
             if (!significantBitReached && index < 0)
                 results.Add(new byte());
             return results.ToArray();

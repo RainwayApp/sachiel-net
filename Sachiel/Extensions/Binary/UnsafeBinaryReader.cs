@@ -11,18 +11,17 @@ namespace Sachiel.Extensions.Binary
     public unsafe class UnsafeBinaryReader
     {
         private static readonly Func<Decoder, bool> HasDecoderStateFunction = BuildHasDecoderStateFunction();
-        private readonly Encoding _encoding;
         private readonly Decoder _decoder;
-
-        private BufferSegment[] _buffers = new BufferSegment[1024];
+        private readonly Encoding _encoding;
         private int _bufferCount;
         private int _bufferIndex;
- 
-      
+
+        private BufferSegment[] _buffers = new BufferSegment[1024];
+        private byte* _endOfBuffer;
+
 
         private byte* _position;
-        private byte* _endOfBuffer;
-     
+
         public UnsafeBinaryReader(Encoding encoding)
         {
             _encoding = encoding;
@@ -49,10 +48,7 @@ namespace Sachiel.Extensions.Binary
             if (_bufferCount > _buffers.Length)
                 _buffers = new BufferSegment[_bufferCount];
 
-            for (var i = 0; i < buffers.Count; i++)
-            {
-                _buffers[i] = buffers[i];
-            }
+            for (var i = 0; i < buffers.Count; i++) _buffers[i] = buffers[i];
 
             var currentSegment = _buffers[_bufferIndex++];
             _position = currentSegment.Data;
@@ -64,7 +60,7 @@ namespace Sachiel.Extensions.Binary
             if (!CurrentBufferHasEnoughBytes(sizeof(bool)))
                 return ReadOverlapped(sizeof(byte)) != 0;
 
-            var value = *(bool*)_position;
+            var value = *(bool*) _position;
             _position += sizeof(bool);
             return value;
         }
@@ -72,7 +68,7 @@ namespace Sachiel.Extensions.Binary
         public byte ReadByte()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(byte)))
-                return (byte)ReadOverlapped(sizeof(byte));
+                return (byte) ReadOverlapped(sizeof(byte));
 
             var value = *_position;
             _position += sizeof(byte);
@@ -82,9 +78,9 @@ namespace Sachiel.Extensions.Binary
         public sbyte ReadSByte()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(sbyte)))
-                return (sbyte)ReadOverlapped(sizeof(sbyte));
+                return (sbyte) ReadOverlapped(sizeof(sbyte));
 
-            var value = *(sbyte*)_position;
+            var value = *(sbyte*) _position;
             _position += sizeof(sbyte);
             return value;
         }
@@ -92,9 +88,9 @@ namespace Sachiel.Extensions.Binary
         public short ReadInt16()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(short)))
-                return (short)ReadOverlapped(sizeof(short));
+                return (short) ReadOverlapped(sizeof(short));
 
-            var value = *(short*)_position;
+            var value = *(short*) _position;
             _position += sizeof(short);
             return value;
         }
@@ -102,9 +98,9 @@ namespace Sachiel.Extensions.Binary
         public ushort ReadUInt16()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(ushort)))
-                return (ushort)ReadOverlapped(sizeof(ushort));
+                return (ushort) ReadOverlapped(sizeof(ushort));
 
-            var value = *(ushort*)_position;
+            var value = *(ushort*) _position;
             _position += sizeof(ushort);
             return value;
         }
@@ -112,9 +108,9 @@ namespace Sachiel.Extensions.Binary
         public int ReadInt32()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(int)))
-                return (int)ReadOverlapped(sizeof(int));
+                return (int) ReadOverlapped(sizeof(int));
 
-            var value = *(int*)_position;
+            var value = *(int*) _position;
             _position += sizeof(int);
             return value;
         }
@@ -122,9 +118,9 @@ namespace Sachiel.Extensions.Binary
         public uint ReadUInt32()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(uint)))
-                return (uint)ReadOverlapped(sizeof(uint));
+                return (uint) ReadOverlapped(sizeof(uint));
 
-            var value = *(uint*)_position;
+            var value = *(uint*) _position;
             _position += sizeof(uint);
             return value;
         }
@@ -132,9 +128,9 @@ namespace Sachiel.Extensions.Binary
         public long ReadInt64()
         {
             if (!CurrentBufferHasEnoughBytes(sizeof(long)))
-                return (long)ReadOverlapped(sizeof(long));
+                return (long) ReadOverlapped(sizeof(long));
 
-            var value = *(long*)_position;
+            var value = *(long*) _position;
             _position += sizeof(long);
             return value;
         }
@@ -144,7 +140,7 @@ namespace Sachiel.Extensions.Binary
             if (!CurrentBufferHasEnoughBytes(sizeof(ulong)))
                 return ReadOverlapped(sizeof(ulong));
 
-            var value = *(ulong*)_position;
+            var value = *(ulong*) _position;
             _position += sizeof(ulong);
             return value;
         }
@@ -154,10 +150,10 @@ namespace Sachiel.Extensions.Binary
             if (!CurrentBufferHasEnoughBytes(sizeof(float)))
             {
                 var temp = ReadOverlapped(sizeof(float));
-                return *(float*)&temp;
+                return *(float*) &temp;
             }
 
-            var value = *(float*)_position;
+            var value = *(float*) _position;
             _position += sizeof(float);
             return value;
         }
@@ -167,10 +163,10 @@ namespace Sachiel.Extensions.Binary
             if (!CurrentBufferHasEnoughBytes(sizeof(double)))
             {
                 var temp = ReadOverlapped(sizeof(double));
-                return *(double*)&temp;
+                return *(double*) &temp;
             }
 
-            var value = *(double*)_position;
+            var value = *(double*) _position;
             _position += sizeof(double);
             return value;
         }
@@ -182,25 +178,16 @@ namespace Sachiel.Extensions.Binary
 
             var proxy = new DecimalProxy();
 
-            proxy.lo = *(int*)_position;
+            proxy.lo = *(int*) _position;
             _position += sizeof(int);
-            proxy.mid = *(int*)_position;
+            proxy.mid = *(int*) _position;
             _position += sizeof(int);
-            proxy.hi = *(int*)_position;
+            proxy.hi = *(int*) _position;
             _position += sizeof(int);
-            proxy.flags = *(int*)_position;
+            proxy.flags = *(int*) _position;
             _position += sizeof(int);
 
-            return *(decimal*)&proxy;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct DecimalProxy
-        {
-            internal int flags;
-            internal int hi;
-            internal int lo;
-            internal int mid;
+            return *(decimal*) &proxy;
         }
 
         public string ReadString()
@@ -231,6 +218,7 @@ namespace Sachiel.Extensions.Binary
                 count |= (b & 0x7F) << shift;
                 shift += 7;
             } while ((b & 0x80) != 0);
+
             return count;
         }
 
@@ -285,12 +273,12 @@ namespace Sachiel.Extensions.Binary
 
         public int AvailableData()
         {
-            return (int)(_endOfBuffer - _position);
+            return (int) (_endOfBuffer - _position);
         }
 
         public byte[] ReadRemainingBytes()
         {
-            var availableData = (int)(_endOfBuffer - _position);
+            var availableData = (int) (_endOfBuffer - _position);
             return ReadBytes(availableData);
         }
 
@@ -298,7 +286,7 @@ namespace Sachiel.Extensions.Binary
         {
             var buffer = new byte[count];
             var readBytes = Read(buffer, 0, count);
-            
+
             if (readBytes == buffer.Length)
                 return buffer;
 
@@ -306,7 +294,7 @@ namespace Sachiel.Extensions.Binary
             // Trim array if we needed
             var copy = new byte[readBytes];
             Buffer.BlockCopy(buffer, 0, copy, 0, readBytes);
-          
+
             return copy;
         }
 
@@ -330,7 +318,7 @@ namespace Sachiel.Extensions.Binary
 
         private int ReadBytesInCurrentBuffer(byte* pBytes, int index, int remainingCount)
         {
-            var availableData = (int)(_endOfBuffer - _position);
+            var availableData = (int) (_endOfBuffer - _position);
             var bytesToRead = Math.Min(remainingCount, availableData);
             Buffer.MemoryCopy(_position, pBytes + index, bytesToRead, bytesToRead);
             _position += bytesToRead;
@@ -381,7 +369,7 @@ namespace Sachiel.Extensions.Binary
 
                 if (_position + numBytes > _endOfBuffer)
                 {
-                    numBytes = (int)(_endOfBuffer - _position);
+                    numBytes = (int) (_endOfBuffer - _position);
 
                     // Super special case: having an odd number of available bytes and needing
                     // more than one byte per char. The decoder would swallow the extra byte
@@ -414,12 +402,14 @@ namespace Sachiel.Extensions.Binary
 
                 Buffer.MemoryCopy(_position, byteBuffer + bufferOffset, maxCharBytesSize, numBytes);
                 _position += numBytes;
-                var charsRead = _decoder.GetChars(byteBuffer, numBytes + bufferOffset, pChars + index, charsRemaining, false);
+                var charsRead = _decoder.GetChars(byteBuffer, numBytes + bufferOffset, pChars + index, charsRemaining,
+                    false);
                 bufferOffset = 0;
 
                 charsRemaining -= charsRead;
                 index += charsRead;
             }
+
             if (HasDecoderStateFunction(_decoder))
                 _position += 1;
 
@@ -428,7 +418,6 @@ namespace Sachiel.Extensions.Binary
             return count - charsRemaining;
         }
 
-   
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CurrentBufferHasEnoughBytes(int size)
@@ -458,13 +447,13 @@ namespace Sachiel.Extensions.Binary
         {
             var proxy = new DecimalProxy
             {
-                lo = (int)ReadOverlapped(sizeof(int)),
-                mid = (int)ReadOverlapped(sizeof(int)),
-                hi = (int)ReadOverlapped(sizeof(int)),
-                flags = (int)ReadOverlapped(sizeof(int))
+                lo = (int) ReadOverlapped(sizeof(int)),
+                mid = (int) ReadOverlapped(sizeof(int)),
+                hi = (int) ReadOverlapped(sizeof(int)),
+                flags = (int) ReadOverlapped(sizeof(int))
             };
 
-            return *(decimal*)&proxy;
+            return *(decimal*) &proxy;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -477,34 +466,50 @@ namespace Sachiel.Extensions.Binary
                 if (_position == _endOfBuffer)
                     SwithToNextBuffer();
 
-                value |= (ulong)*_position++ << (byteRead++ * 8);
+                value |= (ulong) *_position++ << (byteRead++ * 8);
             }
+
             return value;
         }
 
         private static Func<Decoder, bool> BuildHasDecoderStateFunction()
         {
             var arg = Expression.Parameter(typeof(Decoder));
-            var utf8DecoderType = typeof(UTF8Encoding).GetNestedType("UTF8Decoder", BindingFlags.NonPublic | BindingFlags.Public);
-            var utf8DecoderHasStateProp = utf8DecoderType.GetProperty("HasState", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            var utf8DecoderType =
+                typeof(UTF8Encoding).GetNestedType("UTF8Decoder", BindingFlags.NonPublic | BindingFlags.Public);
+            var utf8DecoderHasStateProp = utf8DecoderType.GetProperty("HasState",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-            var utf7DecoderType = typeof(UTF7Encoding).GetNestedType("Decoder", BindingFlags.NonPublic | BindingFlags.Public);
-            var utf7DecoderHasStateProp = utf7DecoderType.GetProperty("HasState", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            var utf7DecoderType =
+                typeof(UTF7Encoding).GetNestedType("Decoder", BindingFlags.NonPublic | BindingFlags.Public);
+            var utf7DecoderHasStateProp = utf7DecoderType.GetProperty("HasState",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
             var utf8Decoder = Expression.Parameter(utf8DecoderType);
             var utf7Decoder = Expression.Parameter(utf7DecoderType);
 
             var block = Expression.Block(
-                new[] { utf8Decoder, utf7Decoder },
+                new[] {utf8Decoder, utf7Decoder},
                 Expression.Assign(utf8Decoder, Expression.TypeAs(arg, utf8DecoderType)),
                 Expression.Assign(utf7Decoder, Expression.TypeAs(arg, utf7DecoderType)),
-                Expression.Condition(Expression.ReferenceNotEqual(utf8Decoder, Expression.Constant(null, utf8DecoderType)),
+                Expression.Condition(
+                    Expression.ReferenceNotEqual(utf8Decoder, Expression.Constant(null, utf8DecoderType)),
                     Expression.Property(utf8Decoder, utf8DecoderHasStateProp),
-                    Expression.Condition(Expression.ReferenceNotEqual(utf7Decoder, Expression.Constant(null, utf7DecoderType)),
+                    Expression.Condition(
+                        Expression.ReferenceNotEqual(utf7Decoder, Expression.Constant(null, utf7DecoderType)),
                         Expression.Property(utf7Decoder, utf7DecoderHasStateProp),
                         Expression.Constant(false))));
 
             return Expression.Lambda<Func<Decoder, bool>>(block, arg).Compile();
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct DecimalProxy
+        {
+            internal int flags;
+            internal int hi;
+            internal int lo;
+            internal int mid;
         }
     }
 }
