@@ -14,7 +14,6 @@ Install via NuGet: ```Install-Package sachiel-net```
 ### Supported Langauges 
 
 - C#
-- [Typescript](https://github.com/RainwayApp/sachiel-ts)
 
 ### TODO Langauges 
 
@@ -23,6 +22,7 @@ Install via NuGet: ```Install-Package sachiel-net```
 - C++ (not started)
 - Ruby (not started)
 - Python (not started)
+- Typescript (not started)
 
 If you wish to help port Sachiel to another langauge feel free, we're happy to link from this repo. 
 
