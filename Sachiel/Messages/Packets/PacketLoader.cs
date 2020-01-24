@@ -110,49 +110,6 @@ namespace Sachiel.Messages.Packets
             return loaders;
         }
 
-        /// <summary>
-        /// Allows for ahead of time compiling and analysis of messages.
-        /// This method will analyse from the root-types, adding in any additional types needed as it goes, setting the compiled generated instance Serializer instance.
-        /// </summary>
-        public static void Compile()
-        {
-            var model = TypeModel.Create();
-            model.Add(typeof(Header), true);
-            model.Add(typeof(Message), true);
-            foreach (var packet in Packets.Values)
-            {
-                model.Add(packet.Type, true);
-            }
-            foreach (var type in GetTypesWithSachielHeader())
-            {
-                model.Add(type, true);
-            }
-            Serializer = model.Compile();
-        }
-
-        /// <summary>
-        /// Allows for partial ahead of time compiling and analysis of messages.
-        /// This method will not fully expand the models
-        /// </summary>
-        public static void CompileInPlace(int iterations = 5)
-        {
-            RuntimeTypeModel.Default.Add(typeof(Header), true);
-            RuntimeTypeModel.Default.Add(typeof(Message), true);
-            foreach (var packet in Packets.Values)
-            {
-                RuntimeTypeModel.Default.Add(packet.Type, true);
-            }
-            foreach (var type in GetTypesWithSachielHeader())
-            {
-                RuntimeTypeModel.Default.Add(type, true);
-            }
-            for (var i = 0; i < iterations; i++)
-            {
-                RuntimeTypeModel.Default.CompileInPlace();
-            }
-        }
-
-
 
         /// <summary>
         ///     Saves all response/request models to raw schemas.
